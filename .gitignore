@@ -1,0 +1,10 @@
+.idea/
+.cursor
+.vscode
+AssetsCache/
+UploadCache/
+editorAutoSave/
+# .cursorrule
+# .cursorrule-api
+# .cursorrule-base
+# .cursorrule-enumsc

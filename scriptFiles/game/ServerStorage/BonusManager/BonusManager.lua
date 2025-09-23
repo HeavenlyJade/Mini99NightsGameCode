@@ -1,0 +1,531 @@
+-- BonusManager.lua
+-- 加成管理器 - 简化版，只保留核心的变量计算和宠物/伙伴计算规则
+
+local MainStorage = game:GetService("MainStorage")
+local ServerStorage = game:GetService("ServerStorage")
+local PetMgr = require(ServerStorage.MSystems.Pet.Mgr.PetMgr) ---@type PetMgr
+local PartnerMgr = require(ServerStorage.MSystems.Pet.Mgr.PartnerMgr) ---@type PartnerMgr
+local WingMgr = require(ServerStorage.MSystems.Pet.Mgr.WingMgr) ---@type WingMgr
+local TrailMgr = require(ServerStorage.MSystems.Trail.TrailMgr) ---@type TrailMgr
+local ConfigLoader = require(MainStorage.Code.Common.ConfigLoader) ---@type ConfigLoader
+local MServerDataManager = require(ServerStorage.Manager.MServerDataManager) ---@type MServerDataManager
+
+local gg = require(MainStorage.Code.Untils.MGlobal) ---@type gg
+
+---@class BonusManager 加成管理器（静态类）
+local BonusManager = {}
+
+-- ============================= 玩家变量加成计算 =============================
+
+--- 计算玩家变量加成
+--- 计算玩家变量加成（增强版：支持天赋系统独立获取）
+---@param player MPlayer 玩家对象
+---@param baseValue number 基础操作数值
+---@param variableBonuses table 玩家变量加成列表
+---@param targetVariable string|nil 目标变量名称（用于匹配加成，nil表示应用所有加成）
+---@return number finalValue, string bonusInfo
+function BonusManager.CalculatePlayerVariableBonuses(player, baseValue, variableBonuses, targetVariable)
+    if not (player and player.variableSystem and variableBonuses and type(variableBonuses) == "table" and #variableBonuses > 0) then
+        return baseValue, ""
+    end
+
+    local variableSystem = player.variableSystem
+    local totalFlatBonus = 0
+    local totalPercentBonus = 0
+    local finalMultipliers = {}
+    local bonusDescriptions = {}
+    -- 基础值改造量：先对 baseValue 做"基础相加/基础相乘"，再计算其余加成
+    local baseFlatAdd = 0
+    local baseMultiplier = 1
+
+    -- 获取玩家成就系统（用于天赋变量获取）
+    local AchievementMgr = require(ServerStorage.MSystems.Achievement.AchievementMgr)
+    local playerAchievement = AchievementMgr.server_player_achievement_data[player.uin] ---@type Achievement
+
+    for i, bonusItem in ipairs(variableBonuses) do
+        local bonusVarName = bonusItem["名称"]
+        local actionType = bonusItem["作用类型"]
+        local targetVar = bonusItem["目标变量"]
+        local scalingRate = bonusItem["缩放倍率"] or 1
+        local effectFieldName = bonusItem["玩家效果字段"] -- 效果等级配置字段
+
+        -- 如果指定了目标变量，只对匹配的变量生效
+        if targetVariable and targetVar and targetVar ~= targetVariable then
+            -- 跳过不匹配的加成
+        else
+            if bonusVarName and actionType then
+                local parsed = variableSystem:ParseVariableName(bonusVarName)
+                if parsed then
+                    local bonusValue = 0
+
+                    if effectFieldName and effectFieldName ~= "" then
+                        -- 从效果等级配置获取值
+                        local effectLevelConfig = ConfigLoader.GetEffectLevel(effectFieldName)
+                        if effectLevelConfig then
+                            local bagData = MServerDataManager.BagMgr.GetPlayerBag(player.uin)
+                            local externalContext = {}
+                            local playerData = player.variableSystem:GetVariablesDictionary()
+                            local maxEffectIndex = effectLevelConfig:GetMaxEffectIndex(playerData, bagData, externalContext)
+                            if maxEffectIndex then
+                                local maxEffectValue = effectLevelConfig.levelEffects[maxEffectIndex].effectValue
+                                bonusValue = maxEffectValue
+                                table.insert(bonusDescriptions, string.format("效果等级配置加成(%s, +%s)",
+                                    effectFieldName, tostring(maxEffectValue)))
+                            end
+                        end
+                    else
+                        -- 关键修改：根据变量名前缀选择数据源
+                        if string.find(bonusVarName, "^天赋_") then
+                            -- 从天赋变量系统获取
+                            if playerAchievement and playerAchievement.talentVariableSystem then
+                                bonusValue = playerAchievement.talentVariableSystem:GetRawBonusValue(bonusVarName)
+                                ------gg.log(string.format("从天赋系统获取变量[%s]: %s", bonusVarName, tostring(bonusValue)))
+                            else
+                                --------gg.log(string.format("警告：玩家[%s]天赋系统不存在，无法获取[%s]", player.uin, bonusVarName))
+                            end
+                        else
+                            -- 其他所有变量从玩家变量系统获取
+                            bonusValue = variableSystem:GetRawBonusValue(bonusVarName)
+                            ------gg.log(string.format("从玩家系统获取变量[%s]: %s", bonusVarName, tostring(bonusValue)))
+                        end
+                    end
+
+                    -- 应用加成计算逻辑
+                    if actionType == "单独相加" then
+                        if parsed.method == "百分比" then
+                            totalPercentBonus = totalPercentBonus + bonusValue
+                            table.insert(bonusDescriptions, string.format("'%s' (%s%%, 单独相加)", parsed.name, bonusValue * 100))
+                        elseif parsed.method == "固定值" then
+                            totalFlatBonus = totalFlatBonus + bonusValue
+                            table.insert(bonusDescriptions, string.format("'%s' (+%s, 单独相加)", parsed.name, bonusValue))
+                        end
+                    elseif actionType == "最终乘法" and bonusValue > 0 then
+                        table.insert(finalMultipliers, bonusValue)
+                        table.insert(bonusDescriptions, string.format("'%s' (×%s, 最终乘法)", parsed.name, bonusValue))
+                    elseif actionType == "基础相乘" then
+                        -- 基础相乘：先作用到基础值 baseValue 上
+                        local multiplier = 1 + (bonusValue * scalingRate)
+                        baseMultiplier = baseMultiplier * math.max(0, multiplier)
+                        table.insert(bonusDescriptions, string.format("'%s' (基础×%s)", parsed.name, multiplier))
+                    elseif actionType == "基础相加" then
+                        -- 基础相加：直接累加到基础值 baseValue 上
+                        local addValue = bonusValue * scalingRate
+                        baseFlatAdd = baseFlatAdd + addValue
+                        table.insert(bonusDescriptions, string.format("'%s' (基础+%s)", parsed.name, addValue))
+                    elseif actionType == "仅作引用" then
+                        -- 仅作引用：不直接修改数值，只作为其它加成的引用来源
+                        table.insert(bonusDescriptions, string.format("'%s' (仅作引用，值=%s)", parsed.name, tostring(bonusValue)))
+                    end
+                end
+            end
+        end
+    end
+
+    -- 先对基础值应用"基础相加/基础相乘"
+    local baseAfterFoundation = baseValue * baseMultiplier + baseFlatAdd
+    -- 在改造后的基础值上应用"单独相加"（百分比、固定）
+    local finalBonusValue = baseAfterFoundation + (baseAfterFoundation * totalPercentBonus) + totalFlatBonus
+
+    -- 应用最终乘法
+    for i, multiplier in ipairs(finalMultipliers) do
+        finalBonusValue = finalBonusValue * multiplier
+    end
+
+    local bonusInfo = ""
+    if #bonusDescriptions > 0 then
+        bonusInfo = string.format(
+            "\n> 加成来源: %s.\n> 原始基础: %s, 基础改造后: %s, 最终值: %s (固定: %s, 百分比: %s%%, 最终乘法: %d个).",
+            table.concat(bonusDescriptions, ", "),
+            tostring(baseValue),
+            tostring(baseAfterFoundation),
+            tostring(finalBonusValue),
+            tostring(totalFlatBonus),
+            tostring(totalPercentBonus * 100),
+            #finalMultipliers
+        )
+    end
+
+    return finalBonusValue, bonusInfo
+end
+-- ============================= 宠物/伙伴加成计算 =============================
+
+--- 获取宠物加成
+---@param player MPlayer 玩家实例
+---@return table<string, any> 宠物加成数据（可能包含 fixed, percentage, targetVariable, itemTarget 等字段）
+function BonusManager.GetPetItemBonuses(player)
+    if not player or not player.uin then
+        ----------gg.log("[BonusManager调试] GetPetItemBonuses: 玩家对象无效")
+        return {}
+    end
+
+    local bonuses = PetMgr.GetActiveItemBonuses(player.uin)
+    ----------gg.log("[BonusManager调试] GetPetItemBonuses: 玩家", player.uin, "宠物加成数据:", bonuses)
+    return bonuses
+end
+
+--- 获取伙伴物品加成
+---@param player MPlayer 玩家实例
+---@return table<string, any> 伙伴加成数据（可能包含 fixed, percentage, targetVariable, itemTarget 等字段）
+function BonusManager.GetPartnerItemBonuses(player)
+    if not player or not player.uin then
+        ----------gg.log("[BonusManager调试] GetPartnerItemBonuses: 玩家对象无效")
+        return {}
+    end
+
+    local bonuses = PartnerMgr.GetActiveItemBonuses(player.uin)
+    ----------gg.log("[BonusManager调试] GetPartnerItemBonuses: 玩家", player.uin, "伙伴加成数据:", bonuses)
+    return bonuses
+end
+
+--- 获取翅膀物品/玩家变量加成
+---@param player MPlayer 玩家实例
+---@return table<string, any> 翅膀加成数据（可能包含 fixed, percentage, targetVariable, itemTarget 等字段）
+function BonusManager.GetWingItemBonuses(player)
+    if not player or not player.uin then
+        return {}
+    end
+    local bonuses = WingMgr.GetActiveItemBonuses(player.uin)
+    ----------gg.log("[BonusManager调试] GetWingItemBonuses: 玩家", player.uin, "翅膀加成数据:", bonuses)
+    return bonuses or {}
+end
+
+--- 获取尾迹物品/玩家变量加成
+---@param player MPlayer 玩家实例
+---@return table<string, any> 尾迹加成数据（可能包含 fixed, percentage, targetVariable, itemTarget 等字段）
+function BonusManager.GetTrailItemBonuses(player)
+    if not player or not player.uin then
+        return {}
+    end
+    local bonuses = TrailMgr.GetActiveItemBonuses(player.uin)
+    return bonuses or {}
+end
+
+--- 获取天赋物品加成（可选按物品名过滤）
+---@param player MPlayer 玩家实例
+---@param targetItemName string|nil 仅聚合该物品名的加成（nil 表示全部）
+---@return table<string, any> 天赋加成数据（可能包含 fixed, percentage, targetVariable, itemTarget 等字段）
+function BonusManager.GetAchievementItemBonuses(player, targetItemName)
+    if not player or not player.uin then
+        return {}
+    end
+
+    local ConfigLoader = require(MainStorage.Code.Common.ConfigLoader)
+    local AchievementMgr = require(ServerStorage.MSystems.Achievement.AchievementMgr)
+    local playerAchievement = AchievementMgr.server_player_achievement_data[player.uin] ---@type Achievement
+
+    if not playerAchievement or not playerAchievement.talentVariableSystem then
+        return {}
+    end
+
+    -- 从天赋变量系统获取物品加成
+    local bonuses = {}
+    local talentVariables = playerAchievement.talentVariableSystem:GetVariablesDictionary()
+
+    for varName, value in pairs(talentVariables) do
+        -- 解析天赋变量名，提取基础信息
+        local parsed = playerAchievement.talentVariableSystem:ParseVariableName(varName)
+
+        if parsed and parsed.operation == "天赋" and parsed.name then
+            -- 从解析结果获取天赋ID
+            local talentId = parsed.name
+
+            -- 获取天赋配置
+            local achievementType = ConfigLoader.GetAchievement(talentId) ---@type AchievementType
+            if achievementType and achievementType:IsTalentAchievement() then
+
+                -- 获取当前等级
+                local currentLevel = playerAchievement:GetTalentLevel(talentId)
+                if currentLevel > 0 then
+
+                    -- 获取等级效果配置
+                    local levelEffect = achievementType:GetLevelEffect(currentLevel)
+                    if levelEffect then
+
+                        -- 检查是否匹配效果字段名称
+                        local effectFieldName = levelEffect["效果字段名称"]
+                        local effectType = levelEffect["效果类型"]
+                        local itemType = levelEffect["物品类型"]
+
+                        -- 根据效果类型决定匹配字段
+                        local shouldMatch = false
+                        if effectType == "物品" and itemType then
+                            -- 物品类型效果：使用物品类型字段匹配
+                            shouldMatch = string.find(varName, itemType) ~= nil
+                        elseif effectFieldName then
+                            -- 其他类型效果：使用效果字段名称匹配
+                            shouldMatch = string.find(varName, effectFieldName) ~= nil
+                        end
+
+                        if shouldMatch then
+
+                            -- 获取加成类型和物品目标
+                            local bonusType = levelEffect["加成类型"]
+                            local itemTarget = levelEffect["物品目标"]
+
+                            -- 只处理物品类型的加成
+                            if bonusType == "物品" and itemTarget then
+
+                                -- 应用目标物品过滤
+                                if targetItemName and itemTarget ~= targetItemName then
+                                    -- 指定了过滤物品且不匹配，跳过
+                                else
+                                    if not bonuses[itemTarget] then
+                                        bonuses[itemTarget] = { fixed = 0, percentage = 0 }
+                                    end
+
+                                    -- 根据解析的方法类型应用加成
+                                    if parsed.method == "固定值" then
+                                        bonuses[itemTarget].fixed = (bonuses[itemTarget].fixed or 0) + value
+                                    elseif parsed.method == "百分比" then
+                                        local percentValue = value
+                                        if percentValue < 1 then
+                                            percentValue = percentValue * 100
+                                        end
+                                        bonuses[itemTarget].percentage = (bonuses[itemTarget].percentage or 0) + percentValue
+                                    end
+
+                                    -- 保留配置信息用于调试
+                                    bonuses[itemTarget].talentId = talentId
+                                    bonuses[itemTarget].effectFieldName = effectFieldName
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return bonuses
+end
+
+--- 获取好友加成（基于在线好友数量）
+---@param player MPlayer 玩家实例
+---@return table<string, { fixed: number, percentage: number, [any]: any }> 好友加成数据
+function BonusManager.GetFriendItemBonuses(player)
+    if not player or not player.uin then
+        return {}
+    end
+
+    local bonuses = {}
+    local friendAch = ConfigLoader.GetAchievement("好友加成") ---@type AchievementType
+    if not friendAch then
+        return bonuses
+    end
+
+    local count = 0
+    if player.onlineFriendsCount then
+        count = tonumber(player.onlineFriendsCount) or 0
+    end
+    if count > 10 then count = 10 end
+
+    if count > 0 then
+        local effects = friendAch:GetLevelEffectValue(1, { F_NUM = count }) or {}
+        --gg.log("好友加成效果列表", effects)
+        for _, eff in ipairs(effects) do
+            local effectType = eff["效果类型"]
+            local fieldName = eff["效果字段名称"]
+            local value = eff["数值"] or 0
+            local itemType = eff["物品类型"]
+            local itemTarget = eff["物品目标"]
+
+
+            local targetItem = nil
+
+            if effectType == "物品" and itemType then
+                -- 物品类型效果：使用物品类型作为目标
+                targetItem = itemType
+            elseif effectType == "玩家变量" and fieldName then
+                targetItem = fieldName
+            end
+
+            if targetItem then
+                if not bonuses[targetItem] then
+                    bonuses[targetItem] = { fixed = 0, percentage = 0 }
+                end
+                local percentValue = value
+                if percentValue < 1 then
+                    percentValue = percentValue * 100
+                end
+                bonuses[targetItem].percentage = (bonuses[targetItem].percentage or 0) + percentValue
+                bonuses[targetItem].effectFieldName = fieldName
+                bonuses[targetItem].itemTarget = itemTarget
+                --gg.log("添加好友加成", "targetItem:", targetItem, "percentage:", percentValue)
+            end
+        end
+    end
+    --gg.log("好友加成",bonuses)
+    return bonuses
+end
+
+--- 计算玩家所有物品加成（可选按目标物品名过滤天赋项）
+---@param player MPlayer 玩家实例
+---@param targetItemName string|nil 若提供，则仅聚合该物品名的天赋加成，其它来源照常
+---@return table<string, { fixed: number, percentage: number, [any]: any }> 按物品目标分组的加成数据
+function BonusManager.CalculatePlayerItemBonuses(player, targetItemName)
+    if not player then
+        return {}
+    end
+
+    local totalBonuses = {}
+
+    -- 1. 获取宠物加成
+    local petBonuses = BonusManager.GetPetItemBonuses(player)
+    BonusManager.MergeBonuses(totalBonuses, petBonuses)
+
+    -- 2. 获取伙伴加成
+    local partnerBonuses = BonusManager.GetPartnerItemBonuses(player)
+    BonusManager.MergeBonuses(totalBonuses, partnerBonuses)
+
+    -- 3. 获取翅膀加成
+    local wingBonuses = BonusManager.GetWingItemBonuses(player)
+    BonusManager.MergeBonuses(totalBonuses, wingBonuses)
+
+    -- 4. 获取尾迹加成
+    local trailBonuses = BonusManager.GetTrailItemBonuses(player)
+    BonusManager.MergeBonuses(totalBonuses, trailBonuses)
+
+    -- 5. 获取天赋（成就）物品加成（支持可选过滤）
+    if targetItemName then
+        local achievementBonuses = BonusManager.GetAchievementItemBonuses(player, targetItemName)
+        BonusManager.MergeBonuses(totalBonuses, achievementBonuses)
+    end
+
+    -- 6. 获取好友加成
+    local friendBonuses = BonusManager.GetFriendItemBonuses(player)
+    BonusManager.MergeBonuses(totalBonuses, friendBonuses)
+    --gg.log("玩家所有物品加成",totalBonuses)
+    return totalBonuses
+end
+
+--- 将加成应用到奖励（先乘后加）
+---@param rewards table<string, number> 原始奖励 {[物品名] = 数量}
+---@param bonuses table<string, {fixed: number, percentage: number}> 加成数据
+---@return table<string, number> 应用加成后的奖励
+function BonusManager.ApplyBonusesToRewards(rewards, bonuses)
+    if not rewards or not bonuses then
+        return rewards or {}
+    end
+
+    local finalRewards = {}
+
+    for itemName, amount in pairs(rewards) do
+        local bonusData = bonuses[itemName] or { fixed = 0, percentage = 0 }
+
+        -- 1. 应用百分比加成（乘法）
+        local amountAfterPercentage = math.floor(amount * (1 + (bonusData.percentage or 0) / 100))
+
+        -- 2. 应用固定值加成（加法）
+        local finalAmount = amountAfterPercentage + (bonusData.fixed or 0)
+
+        finalRewards[itemName] = finalAmount
+    end
+
+    return finalRewards
+end
+
+-- ============================= 关卡奖励加成计算 =============================
+
+--- 计算关卡奖励的玩家变量加成
+---@param player MPlayer 玩家实例
+---@param itemType string 物品类型
+---@param baseAmount number 基础数量
+---@param bonusVariables LevelBonusVariableItem[] 关卡奖励变量配置列表
+---@return number finalAmount, string bonusInfo 最终数量和加成信息
+function BonusManager.CalculateLevelRewardVariableBonuses(player, itemType, baseAmount, bonusVariables)
+    if not player or not itemType or not bonusVariables or #bonusVariables == 0 then
+        return baseAmount, ""
+    end
+
+    local finalAmount = baseAmount
+    local bonusDescriptions = {}
+    
+    -- gg.log(string.format("关卡奖励变量加成检查: 玩家 %s, 物品 %s, 找到 %d 个加成变量", 
+    --     player.name or player.uin, itemType, #bonusVariables))
+
+    -- 遍历每个加成变量，获取玩家变量数据
+    for _, bonusVar in ipairs(bonusVariables) do
+        local varName = bonusVar["变量名称"]
+        local varProperty = bonusVar["变量属性"]
+        local target = bonusVar["作用目标"]
+        local bonusType = bonusVar["加成方式"]
+        local bonusValue = bonusVar["加成数值"]
+        
+        -- gg.log(string.format("加成变量详情: 名称=%s, 属性=%s, 目标=%s, 方式=%s, 数值=%s", 
+        --     varName, varProperty, target, bonusType, tostring(bonusValue)))
+        
+        -- 根据变量属性获取玩家变量数据
+        local playerVarValue = 0
+        if varProperty == "玩家变量" then
+            -- 从玩家变量系统获取
+            if player.variableSystem then
+                playerVarValue = player.variableSystem:GetVariable(varName, 0)
+                -- gg.log(string.format("玩家变量 %s 的值: %s", varName, tostring(playerVarValue)))
+            end
+        elseif varProperty == "全局变量" then
+            -- 从全局变量系统获取（如果有的话）
+            -- 这里可以根据实际需求实现全局变量获取逻辑
+            gg.log(string.format("全局变量 %s 暂未实现", varName))
+        end
+        
+        -- 根据加成方式计算加成
+        if playerVarValue > 0 then
+            local oldAmount = finalAmount
+            
+            if bonusType == "最终乘法" then
+                finalAmount = finalAmount * (1 + playerVarValue)
+                table.insert(bonusDescriptions, string.format("最终乘法加成: %s x (1+%s) = %s", 
+                    tostring(oldAmount), tostring(playerVarValue), tostring(finalAmount)))
+            elseif bonusType == "固定加成" then
+                finalAmount = finalAmount + playerVarValue
+                table.insert(bonusDescriptions, string.format("固定加成: %s + %s = %s", 
+                    tostring(oldAmount), tostring(playerVarValue), tostring(finalAmount)))
+            elseif bonusType == "百分比加成" then
+                local bonusAmount = finalAmount * (playerVarValue / 100)
+                finalAmount = finalAmount + bonusAmount
+                table.insert(bonusDescriptions, string.format("百分比加成: %s + %.2f (%s%%) = %s", 
+                    tostring(oldAmount), bonusAmount, tostring(playerVarValue), tostring(finalAmount)))
+            end
+        end
+    end
+
+    local bonusInfo = ""
+    if #bonusDescriptions > 0 then
+        bonusInfo = string.format("关卡奖励变量加成: %s", table.concat(bonusDescriptions, ", "))
+    end
+
+    return finalAmount, bonusInfo
+end
+
+-- ============================= 工具方法 =============================
+
+--- 合并加成数据
+---@param target table<string, { fixed: number, percentage: number, [any]: any }> 目标加成表
+---@param source table<string, any> 源加成表
+function BonusManager.MergeBonuses(target, source)
+    if not source then
+        return
+    end
+
+    for itemName, bonusData in pairs(source) do
+        if not target[itemName] then
+            target[itemName] = { fixed = 0, percentage = 0 }
+        end
+
+        if type(bonusData.fixed) == "number" and bonusData.fixed > 0 then
+            target[itemName].fixed = (target[itemName].fixed or 0) + bonusData.fixed
+        end
+        if type(bonusData.percentage) == "number" and bonusData.percentage > 0 then
+            target[itemName].percentage = (target[itemName].percentage or 0) + bonusData.percentage
+        end
+
+        -- 【修复】保留匹配所需的字段
+        if bonusData.targetVariable then
+            target[itemName].targetVariable = bonusData.targetVariable
+        end
+        if bonusData.itemTarget then
+            target[itemName].itemTarget = bonusData.itemTarget
+        end
+    end
+end
+
+return BonusManager
