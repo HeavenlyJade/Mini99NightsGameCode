@@ -9,7 +9,6 @@ local Vector2  = Vector2
 local Vector3  = Vector3
 local ColorQuad = ColorQuad
 local Enum = Enum
-local wait = wait
 local math = math
 local os   = os
 
@@ -79,7 +78,7 @@ function MainServer.start_server()
     MainServer.initModule()
 
     MainServer.createNetworkChannel()     --建立网络通道
-    wait(1)                               --云服务器启动配置文件下载和解析繁忙，稍微等待
+    -- 已移除：启动后等待1秒
     -- MainServer.bind_update_tick()         --开始tick
     MainServer.bind_save_data_tick()      --开始定时存盘
     MServerInitPlayer.setInitFinished(true)  -- 设置初始化完成
@@ -100,28 +99,17 @@ function MainServer.initModule()
     -- 初始化核心管理器
     local BagMgr = require(ServerStorage.MSystems.Bag.BagMgr)
     local MailMgr = require(ServerStorage.MSystems.Mail.MailMgr)
-    local PetMgr = require(ServerStorage.MSystems.Pet.Mgr.PetMgr) ---@type PetMgr
-    local PartnerMgr = require(ServerStorage.MSystems.Pet.Mgr.PartnerMgr) ---@type PartnerMgr
-    local WingMgr = require(ServerStorage.MSystems.Pet.Mgr.WingMgr) ---@type WingMgr
-    local TrailMgr = require(ServerStorage.MSystems.Trail.TrailMgr) ---@type TrailMgr
+    
     local GameModeManager = require(ServerStorage.GameModes.GameModeManager) ---@type GameModeManager
-    local AchievementMgr = require(ServerStorage.MSystems.Achievement.AchievementMgr) ---@type AchievementMgr
-    local RewardMgr = require(ServerStorage.MSystems.Reward.RewardMgr) ---@type RewardMgr
+    
     local LotteryMgr = require(ServerStorage.MSystems.Lottery.LotteryMgr) ---@type LotteryMgr
     local MiniShopManager = require(ServerStorage.MiniGameMgr.MiniShopManager) ---@type MiniShopManager
     local RankingMgr = require(ServerStorage.MSystems.Ranking.RankingMgr) ---@type RankingMgr
     local SceneNodeManager = require(ServerStorage.SceneInteraction.SceneNodeManager) ---@type SceneNodeManager
 
-    -- 延迟加载RewardMgr以避免循环引用
     serverDataMgr.BagMgr = BagMgr
     serverDataMgr.MailMgr = MailMgr
-    serverDataMgr.PetMgr = PetMgr
-    serverDataMgr.PartnerMgr = PartnerMgr
-    serverDataMgr.WingMgr = WingMgr
-    serverDataMgr.TrailMgr = TrailMgr
     serverDataMgr.GameModeManager = GameModeManager
-    serverDataMgr.AchievementMgr = AchievementMgr
-    serverDataMgr.RewardMgr = RewardMgr  -- 延迟加载
     serverDataMgr.LotteryMgr = LotteryMgr
     serverDataMgr.MiniShopManager = MiniShopManager:OnInit()
     serverDataMgr.RankingMgr = RankingMgr
@@ -131,17 +119,13 @@ function MainServer.initModule()
     local CommandManager = require(ServerStorage.CommandSys.MCommandMgr)
     local BagEventManager = require(ServerStorage.MSystems.Bag.BagEventManager) ---@type BagEventManager
     local MailEventManager = require(ServerStorage.MSystems.Mail.MailEventManager) ---@type MailEventManager
-    local PetEventManager = require(ServerStorage.MSystems.Pet.EventManager.PetEventManager) ---@type PetEventManager
-    local PartnerEventManager = require(ServerStorage.MSystems.Pet.EventManager.PartnerEventManager) ---@type PartnerEventManager
-    local WingEventManager = require(ServerStorage.MSystems.Pet.EventManager.WingEventManager) ---@type WingEventManager
-    local TrailEventManager = require(ServerStorage.MSystems.Trail.TrailEventManager) ---@type TrailEventManager
+    -- 已移除：宠物/伙伴/翅膀/尾迹事件管理器
     local GlobalMailManager = require(ServerStorage.MSystems.Mail.GlobalMailManager) ---@type GlobalMailManager
     local RaceGameEventManager = require(ServerStorage.GameModes.Modes.RaceGameEventManager) ---@type RaceGameEventManager
-    local AchievementEventManager = require(ServerStorage.MSystems.Achievement.AchievementEventManager) ---@type AchievementEventManager
-    local RewardEventManager = require(ServerStorage.MSystems.Reward.RewardEventManager) ---@type RewardEventManager
+    -- 已移除：成就与奖励事件管理器
     local LotteryEventManager = require(ServerStorage.MSystems.Lottery.LotteryEventManager) ---@type LotteryEventManager
     local ShopEventManager = require(ServerStorage.MSystems.Shop.ShopEventManager) ---@type ShopEventManager
-    local RewardBonusEventManager = require(ServerStorage.MSystems.RewardBonus.RewardBonusEventManager) ---@type RewardBonusEventManager
+    -- 已移除：奖励加成事件管理器
     local CommonEventManager = require(ServerStorage.MiniGameMgr.CommonEventManager) ---@type CommonEventManager
     local RankingEventManager = require(ServerStorage.MSystems.Ranking.RankingEventManager) ---@type RankingEventManager
     local SceneInteractionEventManager = require(ServerStorage.SceneInteraction.SceneInteractionEventManager) ---@type SceneInteractionEventManager
@@ -152,16 +136,9 @@ function MainServer.initModule()
 
     BagEventManager.Init()
     MailEventManager.Init()
-    PetEventManager.Init()
-    PartnerEventManager.Init()
-    WingEventManager.Init()
-    TrailEventManager.Init()
     RaceGameEventManager.Init()
-    AchievementEventManager.Init()
-    RewardEventManager.Init()
     LotteryEventManager.Init()
     ShopEventManager.Init()
-    RewardBonusEventManager.Init()
     CommonEventManager.Init()
     RankingEventManager.Init()
     SceneInteractionEventManager.Init()
@@ -170,15 +147,8 @@ function MainServer.initModule()
 
 
     SceneNodeManager.Init()
-    local AutoRaceEventManager = require(ServerStorage.AutoRaceSystem.AutoRaceEvent) ---@type AutoRaceEventManager
-    local AutoRaceManager = require(ServerStorage.AutoRaceSystem.AutoRaceManager) ---@type AutoRaceManager
-    local AutoPlayEventManager = require(ServerStorage.AutoRaceSystem.AutoPlayEvent) ---@type AutoPlayEventManager
-    local AutoPlayManager = require(ServerStorage.AutoRaceSystem.AutoPlayManager) ---@type AutoPlayManager
-    AutoRaceManager.Init()
-    AutoRaceEventManager.Init()
-    AutoPlayManager.Init()
-    AutoPlayEventManager.Init()
-    RewardMgr.Init()
+    -- 已移除：自动竞速/自动挂机相关初始化
+    -- 已移除：RewardMgr 初始化
 
 
 
@@ -200,7 +170,7 @@ end
 function MainServer.createNetworkChannel()
 
         gg.network_channel = MainStorage:WaitForChild("NetworkChannel")
-        gg.network_channel.OnServerNotify:Connect(MainServer.OnServerNotify)
+        -- 已移除：OnServerNotify 连接
 end
 
 
@@ -254,8 +224,7 @@ function MainServer.bind_save_data_tick()
     timer.Callback = function()
         for uin, player in pairs(serverDataMgr.getAllPlayers()) do
             MServerInitPlayer.OnPlayerSave(uin)
-                -- 按需等待120秒，避免触发分钟级保存次数上限
-            wait(90)
+                -- 已移除：循环内等待以限制频率
         end
     end
     timer:Start()

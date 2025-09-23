@@ -18,16 +18,10 @@ local serverDataMgr     = require(ServerStorage.Manager.MServerDataManager) ---@
 local EventPlayerConfig = require(MainStorage.Code.Event.EventPlayer) ---@type EventPlayerConfig
 local MailMgr = require(ServerStorage.MSystems.Mail.MailMgr) ---@type MailMgr
 local BagMgr = require(ServerStorage.MSystems.Bag.BagMgr) ---@type BagMgr
-local PetMgr = require(ServerStorage.MSystems.Pet.Mgr.PetMgr) ---@type PetMgr
-local PartnerMgr = require(ServerStorage.MSystems.Pet.Mgr.PartnerMgr) ---@type PartnerMgr
-local WingMgr = require(ServerStorage.MSystems.Pet.Mgr.WingMgr) ---@type WingMgr
-local TrailMgr = require(ServerStorage.MSystems.Trail.TrailMgr) ---@type TrailMgr
-local AchievementMgr = require(ServerStorage.MSystems.Achievement.AchievementMgr) ---@type AchievementMgr
 local LotteryMgr = require(ServerStorage.MSystems.Lottery.LotteryMgr) ---@type LotteryMgr
 
 local MPlayer       = require(ServerStorage.EntityTypes.MPlayer)          ---@type MPlayer
 local PlayerInitMgr = require(ServerStorage.MSystems.PlayerInitMgr) ---@type PlayerInitMgr
-local MiniApiFriendsService = require(MainStorage.Code.MServer.MiniApiServices.MiniApiFriendsService) ---@type MiniApiFriendsService
 
 local cloudDataMgr  = require(ServerStorage.CloundDataMgr.MCloudDataMgr)    ---@type MCloudDataMgr
 local NodeCloneGenerator = require(ServerStorage.ServerUntils.NodeCloneGenerator) ---@type NodeCloneGenerator
@@ -160,20 +154,11 @@ function MServerInitPlayer.player_enter_game(player)
 
 
 
-    AchievementMgr.OnPlayerJoin(uin_)
     MailMgr.OnPlayerJoin(player_)
     BagMgr.OnPlayerJoin(player_)
-    PetMgr.OnPlayerJoin(player_)
-    PartnerMgr.OnPlayerJoin(player_)
-    WingMgr.OnPlayerJoin(player_)
-    TrailMgr.OnPlayerJoin(player_)
-    local RewardMgr = require(ServerStorage.MSystems.Reward.RewardMgr) ---@type RewardMgr
-    RewardMgr.OnPlayerJoin(player_)
     LotteryMgr.OnPlayerJoin(player_)
     local ShopMgr = require(ServerStorage.MSystems.Shop.ShopMgr) ---@type ShopMgr
     ShopMgr.OnPlayerJoin(player_)
-    local RewardBonusMgr = require(ServerStorage.MSystems.RewardBonus.RewardBonusMgr) ---@type RewardBonusMgr
-    RewardBonusMgr.OnPlayerJoin(player_)
     -- 判断是否为新玩家：数据为空、isNew为false、或者vars为空表
     local isNewPlayer = cloud_player_data_ == nil or 
                        not cloud_player_data_.vars or 
@@ -183,14 +168,7 @@ function MServerInitPlayer.player_enter_game(player)
         PlayerInitMgr.InitializeNewPlayer(player_)
     end
     
-    -- 【重构】玩家上线时，调用伙伴管理器来更新模型显示
-    PartnerMgr.UpdateAllEquippedPartnerModels(player_)
-    -- 【新增】玩家上线时，调用宠物管理器来更新模型显示
-    PetMgr.UpdateAllEquippedPetModels(player_)
-    -- 【新增】玩家上线时，调用翅膀管理器来更新模型显示
-    WingMgr.UpdateAllEquippedWingModels(player_)
-    -- 【新增】玩家上线时，调用尾迹管理器来更新模型显示
-    TrailMgr.UpdateAllEquippedTrailModels(player_)
+    -- 已移除：伙伴/宠物/翅膀/尾迹模型更新
 
     MServerInitPlayer.syncPlayerDataToClient(player_)
     MServerInitPlayer.EnsureDecorativeObjectsSync(player_actor_,player_)
@@ -202,7 +180,7 @@ function MServerInitPlayer.player_enter_game(player)
     gg.log("玩家进入了游戏", gg.player_scene_map,player)
 
     -- 执行指令执行配置中的指令列表
-    MServerInitPlayer.ExecuteCommandConfig(player_)
+    -- MServerInitPlayer.ExecuteCommandConfig(player_)
     -- 【新增】记录房间内好友关系
     -- 【新增】广播当前房间玩家列表给所有在线玩家（客户端用于刷新UI，如好友加成）
     do
@@ -312,16 +290,11 @@ end
 function MServerInitPlayer.syncPlayerDataToClient(mplayer)
     local BagEventConfig = require(MainStorage.Code.Event.event_bag) ---@type BagEventConfig
     local EventPlayerConfig = require(MainStorage.Code.Event.EventPlayer) ---@type EventPlayerConfig
-    local AchievementEventManager = require(ServerStorage.MSystems.Achievement.AchievementEventManager) ---@type AchievementEventManager
+    -- 已移除：成就事件管理器
 
     local uin = mplayer.uin
     BagMgr.ForceSyncToClient(uin)
-    PetMgr.ForceSyncToClient(uin)
-
-    PartnerMgr.ForceSyncToClient(uin)
-    WingMgr.ForceSyncToClient(uin)
-    -- 【新增】同步尾迹数据
-    TrailMgr.ForceSyncToClient(uin)
+    -- 已移除：伙伴/宠物/翅膀/尾迹数据同步
 
     -- 【新增】同步抽奖数据
     local LotteryEventManager = require(ServerStorage.MSystems.Lottery.LotteryEventManager) ---@type LotteryEventManager
@@ -331,9 +304,7 @@ function MServerInitPlayer.syncPlayerDataToClient(mplayer)
     local ShopMgr = require(ServerStorage.MSystems.Shop.ShopMgr) ---@type ShopMgr
     ShopMgr.PushShopDataToClient(uin)
 
-    -- 【新增】同步奖励加成数据
-    local RewardBonusEventManager = require(ServerStorage.MSystems.RewardBonus.RewardBonusEventManager) ---@type RewardBonusEventManager
-    RewardBonusEventManager.SyncPlayerRewardData(uin)
+    -- 已移除：奖励加成数据同步
 
     -- 获取变量数据
     if mplayer.variableSystem then
@@ -353,9 +324,7 @@ function MServerInitPlayer.syncPlayerDataToClient(mplayer)
     local MServerEventManager = require(ServerStorage.Manager.MServerEventManager) ---@type MServerEventManager
     MServerEventManager.syncAdWatchCountToClient(mplayer)
 
-    -- 获取任务数据
-    -- 【重构】调用成就事件管理器来处理所有成就数据的同步
-    AchievementEventManager.NotifyAllDataToClient(uin)
+    -- 已移除：成就数据同步
 
     -- 【新增】同步排行榜数据
     local RankingEventManager = require(ServerStorage.MSystems.Ranking.RankingEventManager) ---@type RankingEventManager
@@ -366,7 +335,6 @@ end
 -- 玩家离开游戏
 function MServerInitPlayer.player_leave_game(player)
     gg.log("玩家离开游戏", player.UserId, player.Name, player.Nickname)
-    local RewardMgr = require(ServerStorage.MSystems.Reward.RewardMgr) ---@type RewardMgr
 
     
     local uin_ = player.UserId
@@ -391,23 +359,13 @@ function MServerInitPlayer.player_leave_game(player)
 
         BagMgr.OnPlayerLeave(uin_)
         MailMgr.OnPlayerLeave(uin_)
-        PetMgr.OnPlayerLeave(uin_)
-        PartnerMgr.OnPlayerLeave(uin_)
-        WingMgr.OnPlayerLeave(uin_)
-        TrailMgr.OnPlayerLeave(uin_)
-        AchievementMgr.OnPlayerLeave(uin_)
-        RewardMgr.OnPlayerLeave(uin_)
+        -- 已移除：伙伴/宠物/翅膀/尾迹/成就离开处理
         LotteryMgr.OnPlayerLeave(uin_)
 
         mplayer:leaveGame()
         serverDataMgr.removePlayer(uin_, player.Name)
-        local AutoPlayManager = require(ServerStorage.AutoRaceSystem.AutoPlayManager) ---@type AutoPlayManager
-        AutoPlayManager.CleanupPlayerAutoPlayState(uin_)
-        local AutoRaceManager = require(ServerStorage.AutoRaceSystem.AutoRaceManager) ---@type AutoRaceManager
-
-        AutoRaceManager.CleanupPlayerAutoRaceState(uin_)
-        local RewardBonusMgr = require(ServerStorage.MSystems.RewardBonus.RewardBonusMgr) ---@type RewardBonusMgr
-        RewardBonusMgr.OnPlayerLeave(mplayer)
+        -- 已移除：自动挂机与自动竞速相关清理
+        -- 已移除：奖励加成管理器离开处理
     end
 
 
@@ -425,7 +383,6 @@ function MServerInitPlayer.player_leave_game(player)
 end
 
 function MServerInitPlayer.OnPlayerSave(uin_)
-    local RewardMgr = require(ServerStorage.MSystems.Reward.RewardMgr) ---@type RewardMgr
     local mplayer = serverDataMgr.server_players_list[uin_] ---@type MPlayer
     
     if not mplayer then
@@ -436,10 +393,7 @@ function MServerInitPlayer.OnPlayerSave(uin_)
     -- MailMgr.SavePlayerMailData(uin_)
     mplayer:leaveGame()
     BagMgr.SaveAllOnlinePlayerBags(uin_)
-    PetMgr.ForceSavePlayerData(uin_)
-    PartnerMgr.SavePlayerPartnerData(uin_)
-    WingMgr.SavePlayerWingData(uin_)
-    TrailMgr.SavePlayerTrailData(uin_)
+    -- 已移除：伙伴/宠物/翅膀/尾迹保存
     -- LotteryMgr.SavePlayerLotteryData(uin_)
 
 
@@ -447,8 +401,7 @@ function MServerInitPlayer.OnPlayerSave(uin_)
     -- RewardMgr.SavePlayerRewardData(uin_)
     local ShopMgr = require(ServerStorage.MSystems.Shop.ShopMgr) ---@type ShopMgr
     -- ShopMgr.SavePlayerShopData(uin_)
-    local RewardBonusMgr = require(ServerStorage.MSystems.RewardBonus.RewardBonusMgr) ---@type RewardBonusMgr
-    -- RewardBonusMgr.SavePlayerData(uin_)
+    -- 已移除：奖励加成管理器存档
     -- 保存玩家基础数据
     gg.log("统一存盘：玩家", uin_, "数据已保存")
 end
@@ -475,53 +428,13 @@ function MServerInitPlayer.setupPlayerActorEvents(mplayer)
 
     -- 监听行走事件
     actor.Walking:Connect(function(isWalking)
-        if isWalking then
-            -- 检查是否装备了翅膀，如果装备了则播放翅膀扇动音效
-            MServerInitPlayer.playWingSoundIfEquipped(mplayer, true)
-        else
-            -- 停止翅膀扇动音效
-            MServerInitPlayer.playWingSoundIfEquipped(mplayer, false)
-        end
+        -- 已移除：翅膀扇动音效
     end)
 
 end
 
 -- 检查是否装备了翅膀并播放/停止翅膀扇动音效
-function MServerInitPlayer.playWingSoundIfEquipped(mplayer, isPlaying)
-    if not mplayer or not mplayer.uin then
-        return
-    end
-
-    local WingMgr = require(ServerStorage.MSystems.Pet.Mgr.WingMgr) ---@type WingMgr
-    
-    -- 检查玩家是否装备了翅膀
-    -- local hasEquippedWings = WingMgr.HasEquippedWings(mplayer.uin)
-    
-    -- if hasEquippedWings then
-    --     local CardIcon = require(MainStorage.Code.Common.Icon.card_icon) ---@type CardIcon
-    --     local wingSoundAssetId = CardIcon.soundResources["翅膀扇动音效1"]
-        
-    --     if wingSoundAssetId then
-    --         if isPlaying then
-    --             -- 播放翅膀扇动音效
-    --             gg.network_channel:fireClient(mplayer.uin, {
-    --                 cmd = "PlaySound",
-    --                 soundAssetId = wingSoundAssetId,
-    --                 key = "wing_flap_" .. mplayer.uin, -- 使用玩家ID作为唯一键
-    --                 volume = 3, -- 设置合适的音量
-    --                 isLoop = true -- 循环播放
-    --             })
-    --         else
-    --             -- 停止翅膀扇动音效
-    --             gg.network_channel:fireClient(mplayer.uin, {
-    --                 cmd = "StopKeyedSound",
-    --                 key = "wing_flap_" .. mplayer.uin
-    --             })
-    --         end
-    --     else
-    --     end
-    -- end
-end
+-- 已移除：翅膀音效相关代码
 
 -- 【新增】检查玩家是否通过邀请进入以及是否为新玩家
 ---@param player MPlayer 玩家对象

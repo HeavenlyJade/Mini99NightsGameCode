@@ -6,22 +6,19 @@ local serverDataMgr     = require(ServerStorage.Manager.MServerDataManager) ---@
 
 local MailCommand = require(ServerStorage.CommandSys.Commands.MmailCom) ---@type MailCommand
 local BagCommand = require(ServerStorage.CommandSys.Commands.MbagCom) ---@type BagCommand
-local PetCommand = require(ServerStorage.CommandSys.Commands.MPetCom) ---@type PetCommand
-local PartnerCommand = require(ServerStorage.CommandSys.Commands.MPartnerCom) ---@type PartnerCommand
-local WingCommand = require(ServerStorage.CommandSys.Commands.MWingCom) ---@type WingCommand
+-- 已移除：宠物/伙伴/翅膀指令
 local VariableCommand = require(ServerStorage.CommandSys.Commands.MVariableCom) ---@type VariableCommand
 local StatCommand = require(ServerStorage.CommandSys.Commands.MStatCom) ---@type StatCommand
 local ClearDataCommand = require(ServerStorage.CommandSys.Commands.MClearDataCom) ---@type ClearDataCommand
 -- local SkillCommands = require(ServerStorage.CommandSys.Commands.MskillCom)     ---@type SkillCommands
 local json = require(MainStorage.Code.Untils.json) ---@type json
 local ServerEventManager = require(MainStorage.Code.MServer.Event.ServerEventManager) ---@type ServerEventManager
-local TrailCommand = require(ServerStorage.CommandSys.Commands.MTrailCom) ---@type TrailCommand
-local RewardCommand = require(ServerStorage.CommandSys.Commands.RewardCommand) ---@type RewardCommand
+-- 已移除：尾迹/奖励指令
 local OpenUICommand = require(ServerStorage.CommandSys.Commands.OpenUICommand) ---@type OpenUICommand
 local AnimationCommand = require(ServerStorage.CommandSys.Commands.MAnimationCom) ---@type AnimationCommand
 local ActorNodeCommand = require(ServerStorage.CommandSys.Commands.MActorNodeCom) ---@type ActorNodeCommand
 local ShopCommand = require(ServerStorage.CommandSys.Commands.MShopCom) ---@type ShopCommand
-local AchievementCommand = require(ServerStorage.CommandSys.Commands.MAchievementCom) ---@type AchievementCommand
+-- 已移除：成就指令
 local CloudDataCommand = require(ServerStorage.CommandSys.Commands.MCloudDataCom) ---@type CloudDataCommand
 local RankingCommand = require(ServerStorage.CommandSys.Commands.MRankingCom) ---@type RankingCommand
 local MiniShopCommand = require(ServerStorage.CommandSys.Commands.MMiniShopCom) ---@type MiniShopCommand
@@ -36,24 +33,18 @@ CommandManager.handlers = {
     ["PlayerItem"] = BagCommand.main,
        -- 邮件相关命令
     ["mail"] = MailCommand.main,
-    -- 宠物相关命令
-    ["pet"] = PetCommand.main,
-    -- 伙伴相关命令
-    ["partner"] = PartnerCommand.main,
-    -- 翅膀相关命令
-    ["wing"] = WingCommand.main,
+    -- 已移除：宠物/伙伴/翅膀
     -- 装载默认的配置技能
     -- ["skillConf"] = SkillCommands.main,
     ["variable"] = VariableCommand.main,
     ["attribute"] = StatCommand.main,
     ["clearPlayerData"] = ClearDataCommand.main,
-    ["trail"] = TrailCommand.main,
-    ["reward"] = RewardCommand.main,
+    -- 已移除：尾迹/奖励
 	["openui"] = OpenUICommand.main,
     ["animation"] = AnimationCommand.main,
     ["actornode"] = ActorNodeCommand.main,
     ["shop"] = ShopCommand.main,
-    ["achievement"] = AchievementCommand.main,
+    -- 已移除：成就
     ["clouddata"] = CloudDataCommand.main,
     ["ranking"] = RankingCommand.main,
     ["minishop"] = MiniShopCommand.main,

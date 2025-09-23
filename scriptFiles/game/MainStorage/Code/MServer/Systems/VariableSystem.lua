@@ -1,26 +1,17 @@
 local MainStorage = game:GetService("MainStorage")
 local gg = require(MainStorage.Code.Untils.MGlobal) ---@type gg
 local ClassMgr = require(MainStorage.Code.Untils.ClassMgr) ---@type ClassMgr
-local ServerEventManager = require(MainStorage.Code.MServer.Event.ServerEventManager) ---@type ServerEventManager
 
 ---@class VariableSystem
 ---@field dataCategory string 数据分类标识
----@field variables table<string, VariableData> 变量存储
+---@field variables table<string, number> 变量存储（key -> value）
 local VariableSystem = ClassMgr.Class("VariableSystem")
-
----@class VariableData
----@field base number 基础值（百分比计算基准）
----@field sources table<string, SourceValue> 来源值映射
-
----@class SourceValue
----@field value number 数值
----@field type string 类型："固定值" | "百分比"
 
 -- 初始化变量系统
 function VariableSystem:OnInit(dataCategory, initialData)
     assert(type(dataCategory) == "string", "数据分类必须是字符串")
     self.dataCategory = dataCategory -- 数据分类标识
-    self.variables = initialData or {} -- 直接使用传入的数据
+    self.variables = initialData or {} -- 直接使用传入的数据（key->number）
     self:_ValidateDataStructure()
 end
 
@@ -40,10 +31,8 @@ end
 --- 数据结构验证
 function VariableSystem:_ValidateDataStructure()
     assert(type(self.variables) == "table", "变量数据必须为table")
-    for k, v in pairs(self.variables) do
-        assert(type(v) == "table", "每个变量值必须为table")
-        assert(type(v.base) == "number" or v.base == nil, "base字段必须为number或nil")
-        assert(type(v.sources) == "table" or v.sources == nil, "sources字段必须为table或nil")
+    for _, v in pairs(self.variables) do
+        assert(type(v) == "number", "每个变量值必须为number")
     end
 end
 
@@ -51,13 +40,7 @@ end
 ---@param key string 变量名
 ---@param baseValue number 基础值
 function VariableSystem:SetBaseValue(key, baseValue)
-    if not self.variables[key] then
-        self.variables[key] = {
-            base = 0,
-            sources = {}
-        }
-    end
-    self.variables[key].base = baseValue
+    self.variables[key] = baseValue or 0
 
 end
 
@@ -65,93 +48,7 @@ end
 ---@param key string 变量名
 ---@return number 基础值
 function VariableSystem:GetBaseValue(key)
-    if not self.variables[key] then
-        return 0
-    end
-    return self.variables[key].base or 0
-end
-
--- 来源值管理 --------------------------------------------------------
-
---- 设置来源值
----@param key string 变量名
----@param source string 来源标识
----@param value number 数值
----@param valueType string 类型："固定值" | "百分比"
-function VariableSystem:SetSourceValue(key, source, value, valueType)
-    if not self.variables[key] then
-        self.variables[key] = {
-            base = 0,
-            sources = {}
-        }
-    end
-
-    valueType = valueType or "固定值"
-    local oldFinalValue = self:GetVariable(key)
-
-    self.variables[key].sources[source] = {
-        value = value,
-        type = valueType
-    }
-
-    -- 触发变量变化事件
-    local newFinalValue = self:GetVariable(key)
-end
-
---- 添加来源值（在现有基础上累加）
----@param key string 变量名
----@param source string 来源标识
----@param value number 累加数值
----@param valueType string 类型："固定值" | "百分比"
-function VariableSystem:AddSourceValue(key, source, value, valueType)
-    if not self.variables[key] then
-        self.variables[key] = {
-            base = 0,
-            sources = {}
-        }
-    end
-
-    valueType = valueType or "固定值"
-    local currentValue = 0
-
-    if self.variables[key].sources[source] then
-        currentValue = self.variables[key].sources[source].value or 0
-    end
-
-    self:SetSourceValue(key, source, currentValue + value, valueType)
-end
-
---- 移除来源
----@param key string 变量名
----@param source string 来源标识
-function VariableSystem:RemoveSource(key, source)
-    if not self.variables[key] or not self.variables[key].sources[source] then
-        return
-    end
-
-    local oldFinalValue = self:GetVariable(key)
-    self.variables[key].sources[source] = nil
-
-    -- 触发变量变化事件
-    local newFinalValue = self:GetVariable(key)
-end
-
---- 根据模式移除来源
----@param pattern string 模式字符串
-function VariableSystem:RemoveSourcesByPattern(pattern)
-    for varKey, varData in pairs(self.variables) do
-        local sourcesToRemove = {}
-
-        for sourceKey in pairs(varData.sources) do
-            if string.find(sourceKey, pattern) then
-                table.insert(sourcesToRemove, sourceKey)
-            end
-        end
-
-        for _, sourceKey in ipairs(sourcesToRemove) do
-            self:RemoveSource(varKey, sourceKey)
-        end
-    end
+    return self.variables[key] or 0
 end
 
 -- 变量获取（对外统一接口）--------------------------------------------------------
@@ -162,13 +59,9 @@ end
 ---@return number 计算后的最终值
 function VariableSystem:GetVariable(key, defaultValue)
     defaultValue = defaultValue or 0
-
-    if not self.variables[key] then
-        return defaultValue
-    end
-
-    -- 直接计算最终值
-    return self:_CalculateFinalValue(key)
+    local v = self.variables[key]
+    if v == nil then return defaultValue end
+    return v
 end
 
 --- 获取变量的原始加成值（基础值+所有来源值的和）
@@ -176,52 +69,7 @@ end
 ---@param key string 变量名
 ---@return number 原始加成值
 function VariableSystem:GetRawBonusValue(key)
-    local varData = self.variables[key]
-    if not varData then
-        return 0
-    end
-    
-    local baseValue = varData.base or 0
-    local totalSourceValue = 0
-
-    if varData.sources then
-        for sourceName, sourceData in pairs(varData.sources) do
-            local sourceValue = sourceData.value or 0
-            totalSourceValue = totalSourceValue + sourceValue
-        end
-    end
-
-    local finalValue = baseValue + totalSourceValue
-    
-    return finalValue
-end
-
---- 计算最终值
----@param key string 变量名
----@return number 最终值
----@private
-function VariableSystem:_CalculateFinalValue(key)
-    local varData = self.variables[key]
-    if not varData then
-        return 0
-    end
-    local baseValue = varData.base or 0
-    local flatSum = 0    -- 固定值总和
-    local percentSum = 0 -- 百分比总和
-
-    -- 分类累加各来源的值
-    if varData.sources then
-        for _, sourceData in pairs(varData.sources) do
-            if sourceData.type == "百分比" then
-                percentSum = percentSum + sourceData.value
-            else -- "固定值"
-                flatSum = flatSum + sourceData.value
-            end
-        end
-    end
-
-    -- 最终值 = 基础值 + 固定值总和 + (基础值 * (1 + 百分比总和)) -- 修正计算逻辑
-    return baseValue + flatSum + (baseValue * percentSum / 100)
+    return self.variables[key] or 0
 end
 
 -- 兼容接口（保持向后兼容）--------------------------------------------------------
@@ -308,10 +156,14 @@ function VariableSystem:ApplyVariableValue(variableName, value, source)
         local operation, method = parts[1], parts[2]
 
         if operation == "加成" then
-            -- "加成"操作，对完整的变量名添加来源
-            local valueType = (method == "百分比") and "百分比" or "固定值"
-            -- 直接使用原始的 variableName 作为 key
-            self:AddSourceValue(variableName, source, value, valueType)
+            -- 简化：不再支持来源，改为直接对变量做加法或按百分比增量
+            if method == "百分比" then
+                local baseValue = self:GetBaseValue(variableName)
+                local increaseAmount = baseValue * (value / 100)
+                self:SetBaseValue(variableName, baseValue + increaseAmount)
+            else
+                self:AddVariable(variableName, value)
+            end
 
         elseif operation == "数据" or operation == "解锁" then
             -- "数据"或"解锁"操作，直接修改完整变量名的基础值
@@ -360,15 +212,11 @@ end
 ---@param key string 变量名
 ---@return table|nil 来源详情
 function VariableSystem:GetVariableSources(key)
-    if not self.variables[key] then
+    local v = self.variables[key]
+    if v == nil then
         return nil
     end
-
-    return {
-        base = self.variables[key].base,
-        sources = self.variables[key].sources,
-        finalValue = self:GetVariable(key)
-    }
+    return { value = v, finalValue = v }
 end
 
 --- 清空所有变量
