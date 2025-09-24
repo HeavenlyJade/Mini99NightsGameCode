@@ -6,7 +6,7 @@ local gg              = require(MainStorage.Code.Untils.MGlobal) ---@type gg
 local ClassMgr    = require(MainStorage.Code.Untils.ClassMgr) ---@type ClassMgr
 local ClientEventManager = require(MainStorage.Code.Client.Event.ClientEventManager) ---@type ClientEventManager
 local ConfigLoader = require(MainStorage.Code.Common.ConfigLoader) ---@type ConfigLoader
-local Controller = require(MainStorage.Code.Client.MController) ---@type Controller
+local Controller = require(MainStorage.Code.Client.ClientCore.MController) ---@type Controller
 ---@class ClientMain
 local ClientMain = ClassMgr.Class("ClientMain")
 
@@ -60,19 +60,6 @@ function ClientMain.start_client()
     SoundPool.Init()
     
 
-
-    -- 导入并初始化挂机区域节点配置
-    local InitAutoSpotNodes = require(MainStorage.Code.Client.SceneNode.InitAutoSpotNodes) ---@type InitAutoSpotNodes
-    InitAutoSpotNodes.InitializeAllAutoSpotNodes()
-
-    -- 导入并初始化地图背景音乐
-    local MapBackgroundMusic = require(MainStorage.Code.Client.SceneNode.MapBackgroundMusic) ---@type MapBackgroundMusic
-    MapBackgroundMusic.InitializeBackgroundMusic()
-
-    -- 导入并初始化关卡奖励节点器
-    local LevelRewardNodeInitializer = require(MainStorage.Code.Client.SceneNode.LevelRewardNodeInitializer) ---@type LevelRewardNodeInitializer
-    LevelRewardNodeInitializer.InitializeAllLevelRewardNodes()
-
     ClientEventManager.Subscribe("FetchAnimDuration", function (evt)
         local animator = gg.GetChild(game:GetService("WorkSpace"), evt.path) ---@cast animator Animator
         if animator then
@@ -89,9 +76,6 @@ function ClientMain.start_client()
     if game.RunService:IsPC() then
         game.MouseService:SetMode(1)
     end
-    -- 导入并初始化赛道系统
-    local RaceTrack = require(MainStorage.Code.Client.SceneNode.RaceTrack) ---@type RaceTrack
-    RaceTrack.InitializeRaceTrack()
 
 end
 

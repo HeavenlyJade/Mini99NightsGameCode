@@ -8,44 +8,22 @@ local MainStorage = game:GetService('MainStorage')
 
 local ItemType = require(MainStorage.Code.Common.TypeConfig.ItemType)
 local SkillTypes = require(MainStorage.Code.Common.TypeConfig.SkillTypes) 
-local EffectType = require(MainStorage.Code.Common.TypeConfig.EffectType)
 local LevelType = require(MainStorage.Code.Common.TypeConfig.LevelType)
-local LevelNodeRewardType = require(MainStorage.Code.Common.TypeConfig.LevelNodeRewardType) ---@type LevelNodeRewardType
-local PetType = require(MainStorage.Code.Common.TypeConfig.PetType)
-local TrailType = require(MainStorage.Code.Common.TypeConfig.TrailType)
 local PlayerInitType = require(MainStorage.Code.Common.TypeConfig.PlayerInitType)
 local SceneNodeType = require(MainStorage.Code.Common.TypeConfig.SceneNodeType)
-local AchievementType = require(MainStorage.Code.Common.TypeConfig.AchievementType) ---@type AchievementType
-local ActionCostType = require(MainStorage.Code.Common.TypeConfig.ActionCostType) ---@type ActionCostType
-local RewardType = require(MainStorage.Code.Common.TypeConfig.RewardType) ---@type RewardType
-local RewardBonusType = require(MainStorage.Code.Common.TypeConfig.RewardBonusType) ---@type RewardBonusType
 local LotteryType = require(MainStorage.Code.Common.TypeConfig.LotteryType) ---@type LotteryType
 local ShopItemType = require(MainStorage.Code.Common.TypeConfig.ShopItemType) ---@type ShopItemType
 local TeleportPointType = require(MainStorage.Code.Common.TypeConfig.TeleportPointType) ---@type TeleportPointType
-local EffectLevelType = require(MainStorage.Code.Common.TypeConfig.EffectLevelType) ---@type EffectLevelType
 -- 引用所有 Config 的原始数据
-local ActionCostConfig = require(MainStorage.Code.Common.Config.ActionCostConfig)
 local ItemTypeConfig = require(MainStorage.Code.Common.Config.ItemTypeConfig)
 local SkillConfig = require(MainStorage.Code.Common.Config.SkillConfig)
 local LevelConfig = require(MainStorage.Code.Common.Config.LevelConfig)
-local LevelNodeRewardConfig = require(MainStorage.Code.Common.Config.LevelNodeRewardConfig) ---@type LevelNodeRewardConfig
 local SceneNodeConfig = require(MainStorage.Code.Common.Config.SceneNodeConfig)
-local AchievementConfig = require(MainStorage.Code.Common.Config.AchievementConfig)
-local PetConfig = require(MainStorage.Code.Common.Config.PetConfig)
-local PartnerConfig = require(MainStorage.Code.Common.Config.PartnerConfig)
-local WingConfig = require(MainStorage.Code.Common.Config.WingConfig)
-local TrailConfig = require(MainStorage.Code.Common.Config.TrailConfig)
 local PlayerInitConfig = require(MainStorage.Code.Common.Config.PlayerInitConfig)
-local VariableNameConfig = require(MainStorage.Code.Common.Config.VariableNameConfig)
-local GameModeConfig = require(MainStorage.Code.Common.Config.GameModeConfig)
-local RewardConfig = require(MainStorage.Code.Common.Config.RewardConfig)
-local RewardBonusConfig = require(MainStorage.Code.Common.Config.RewardBonusConfig)
 local LotteryConfig = require(MainStorage.Code.Common.Config.LotteryConfig)
 local ShopItemConfig = require(MainStorage.Code.Common.Config.ShopItemConfig)
 local TeleportPointConfig = require(MainStorage.Code.Common.Config.TeleportPointConfig)
-local EffectLevelConfig = require(MainStorage.Code.Common.Config.EffectLevelConfig)
--- local NpcConfig = require(MainStorage.Code.Common.Config.NpcConfig) -- 已移除
--- local ItemQualityConfig = require(MainStorage.Code.Common.Config.ItemQualityConfig) -- 已移除
+
 
 ---@class ConfigLoader
 local ConfigLoader = {}
@@ -53,27 +31,11 @@ local ConfigLoader = {}
 -- 用来存放实例化后的配置对象
 ConfigLoader.Items = {}
 ConfigLoader.Skills = {}
-ConfigLoader.Effects = {}
-ConfigLoader.Talents = {}
 ConfigLoader.Levels = {}
 ConfigLoader.LevelNodeRewards = {} -- 新增关卡节点奖励配置存储
-ConfigLoader.ItemQualities = {}
-ConfigLoader.Npcs = {}
 ConfigLoader.SceneNodes = {}
-ConfigLoader.Achievements = {}
-ConfigLoader.Pets = {}
-ConfigLoader.Partners = {} -- 新增伙伴配置存储
-ConfigLoader.Wings = {} -- 新增翅膀配置存储
-ConfigLoader.Trails = {} -- 新增尾迹配置存储
 ConfigLoader.TeleportPoints = {} -- 新增传送点配置存储
-ConfigLoader.ActionCosts = {}
-ConfigLoader.EffectLevels = {} -- 新增效果等级配置存储
-ConfigLoader.ItemTypes = {}
 ConfigLoader.PlayerInits = {}
-ConfigLoader.VariableNames = {}
-ConfigLoader.GameModes = {}
-ConfigLoader.Rewards = {} -- 新增奖励配置存储
-ConfigLoader.RewardBonuses = {} -- 新增奖励配置存储
 ConfigLoader.Lotteries = {} -- 新增抽奖配置存储
 ConfigLoader.ShopItems = {} -- 新增商城商品配置存储
 ConfigLoader.MiniShopItems = {} -- 迷你币商品映射表：miniItemId -> ShopItemType
@@ -103,27 +65,15 @@ end
 
 -- 模块初始化函数，一次性加载所有配置
 function ConfigLoader.Init()
-    ConfigLoader.LoadConfig(ActionCostConfig, ActionCostType, ConfigLoader.ActionCosts, "ActionCost")
     ConfigLoader.LoadConfig(ItemTypeConfig, ItemType, ConfigLoader.Items, "Item")
     ConfigLoader.LoadConfig(LevelConfig, LevelType, ConfigLoader.Levels, "Level")
-    ConfigLoader.LoadConfig(LevelNodeRewardConfig, LevelNodeRewardType, ConfigLoader.LevelNodeRewards, "LevelNodeReward")
-    ConfigLoader.LoadConfig(PartnerConfig, PetType, ConfigLoader.Partners, "Partner")
-    ConfigLoader.LoadConfig(WingConfig, PetType, ConfigLoader.Wings, "Wing")
-    ConfigLoader.LoadConfig(TrailConfig, TrailType, ConfigLoader.Trails, "Trail")
     ConfigLoader.LoadConfig(PlayerInitConfig, PlayerInitType, ConfigLoader.PlayerInits, "PlayerInit")
     ConfigLoader.LoadConfig(SceneNodeConfig, SceneNodeType, ConfigLoader.SceneNodes, "SceneNode")
-    ConfigLoader.LoadConfig(VariableNameConfig,nil,ConfigLoader.VariableNames,"VariableName")
-    ConfigLoader.LoadConfig(GameModeConfig,nil,ConfigLoader.GameModes,"GameMode")
     ConfigLoader.LoadConfig(SkillConfig, SkillTypes, ConfigLoader.Skills, "Skill")
-    ConfigLoader.LoadConfig(AchievementConfig, AchievementType, ConfigLoader.Achievements, "Achievement")
-    ConfigLoader.LoadConfig(RewardConfig, RewardType, ConfigLoader.Rewards, "Reward")
-    ConfigLoader.LoadConfig(RewardBonusConfig, RewardBonusType, ConfigLoader.RewardBonuses, "RewardBonus")
     ConfigLoader.LoadConfig(LotteryConfig, LotteryType, ConfigLoader.Lotteries, "Lottery")
     ConfigLoader.LoadConfig(TeleportPointConfig, TeleportPointType, ConfigLoader.TeleportPoints, "TeleportPoint")
-    ConfigLoader.LoadConfig(EffectLevelConfig, EffectLevelType, ConfigLoader.EffectLevels, "EffectLevel")
     -- 构建迷你币商品映射表
     ConfigLoader.LoadConfig(ShopItemConfig, ShopItemType, ConfigLoader.ShopItems, "ShopItem")
-    ConfigLoader.LoadConfig(PetConfig, PetType, ConfigLoader.Pets, "Pet")
 
     ConfigLoader.BuildMiniShopMapping()
     
@@ -189,71 +139,13 @@ function ConfigLoader.GetSkill(id)
     return ConfigLoader.Skills[id]
 end
 
----@param id string
----@return EffectType
-function ConfigLoader.GetEffect(id)
-    return ConfigLoader.Effects[id]
-end
 
----@param id string
----@return table
-function ConfigLoader.GetItemQuality(id)
-    return ConfigLoader.ItemQualities[id]
-end
 
 function ConfigLoader.GetLevel(id)
     return ConfigLoader.Levels[id]
 end
 
----@param id string
----@return LevelNodeRewardType
-function ConfigLoader.GetLevelNodeReward(id)
-    return ConfigLoader.LevelNodeRewards[id]
-end
 
----@return table<string, LevelNodeRewardType>
-function ConfigLoader.GetAllLevelNodeRewards()
-    return ConfigLoader.LevelNodeRewards
-end
-
---- 根据场景名称筛选关卡节点奖励配置
----@param sceneName string 场景名称
----@return LevelNodeRewardType[] 该场景下的所有关卡节点奖励配置
-function ConfigLoader.GetLevelNodeRewardsByScene(sceneName)
-    local result = {}
-    
-    if not sceneName or sceneName == "" then
-        return result
-    end
-    
-    for _, rewardConfig in pairs(ConfigLoader.LevelNodeRewards) do
-        if rewardConfig:GetSceneName() == sceneName then
-            table.insert(result, rewardConfig)
-        end
-    end
-    
-    return result
-end
-
---- 根据配置名称筛选关卡节点奖励配置
----@param configName string 配置名称（支持部分匹配）
----@return LevelNodeRewardType[] 匹配的关卡节点奖励配置
-function ConfigLoader.GetLevelNodeRewardsByName(configName)
-    local result = {}
-    
-    if not configName or configName == "" then
-        return result
-    end
-    
-    for _, rewardConfig in pairs(ConfigLoader.LevelNodeRewards) do
-        local name = rewardConfig:GetName()
-        if name and string.find(name, configName, 1, true) then
-            table.insert(result, rewardConfig)
-        end
-    end
-    
-    return result
-end
 
 --- 获取关卡节点奖励配置数量
 ---@return number 配置数量
@@ -310,99 +202,12 @@ function ConfigLoader.GetSceneNodesBy(belongScene, sceneType)
     return result
 end
 
----@param id string
----@return AchievementType
-function ConfigLoader.GetAchievement(id)
-    return ConfigLoader.Achievements[id]
-end
 
----@return table<string, AchievementType>
-function ConfigLoader.GetAllAchievements()
-    return ConfigLoader.Achievements
-end
 
----@param id string
----@return PetType
-function ConfigLoader.GetPet(id)
-    return ConfigLoader.Pets[id]
-end
 
----@return table<string, PetType>
-function ConfigLoader.GetAllPets()
-    return ConfigLoader.Pets
-end
 
----@param id string
----@return PetType 伙伴配置与宠物格式相同，所以返回PetType
-function ConfigLoader.GetPartner(id)
-    return ConfigLoader.Partners[id]
-end
 
----@return table<string, PetType> 伙伴配置与宠物格式相同，所以返回PetType表
-function ConfigLoader.GetAllPartners()
-    return ConfigLoader.Partners
-end
 
----@param id string
----@return PetType 翅膀配置与宠物格式相同，所以返回PetType
-function ConfigLoader.GetWing(id)
-    return ConfigLoader.Wings[id]
-end
-
----@return table<string, PetType> 翅膀配置与宠物格式相同，所以返回PetType表
-function ConfigLoader.GetAllWings()
-    return ConfigLoader.Wings
-end
-
----@param id string
----@return TrailType 尾迹配置
-function ConfigLoader.GetTrail(id)
-    return ConfigLoader.Trails[id]
-end
-
----@return table<string, TrailType> 尾迹配置表
-function ConfigLoader.GetAllTrails()
-    return ConfigLoader.Trails
-end
-
----@param id string
----@return ActionCostType
-function ConfigLoader.GetActionCost(id)
-    return ConfigLoader.ActionCosts[id]
-end
-
----@param id string
----@return EffectLevelType
-function ConfigLoader.GetEffectLevel(id)
-    return ConfigLoader.EffectLevels[id]
-end
-
----@return table<string, EffectLevelType>
-function ConfigLoader.GetAllEffectLevels()
-    return ConfigLoader.EffectLevels
-end
-
----@param id string
----@return RewardType
-function ConfigLoader.GetReward(id)
-    return ConfigLoader.Rewards[id]
-end
-
----@return table<string, RewardType>
-function ConfigLoader.GetAllRewards()
-    return ConfigLoader.Rewards
-end
-
----@param id string
----@return RewardBonusType
-function ConfigLoader.GetRewardBonus(id)
-    return ConfigLoader.RewardBonuses[id]
-end
-
----@return table<string, RewardBonusType>
-function ConfigLoader.GetAllRewardBonuses()
-    return ConfigLoader.RewardBonuses
-end
 
 ---@param id string
 ---@return LotteryType
@@ -437,7 +242,7 @@ function ConfigLoader.GetAllTeleportPoints()
     return ConfigLoader.TeleportPoints
 end
 
----@param category string 商品分类（如"伙伴"、"宠物"、"翅膀"等）
+---@param category string 商品分类（如"道具"、"装备"等）
 ---@return ShopItemType[] 该分类下的所有商品（按品质排序）
 function ConfigLoader.GetShopItemsByCategory(category)
     local itemsArray = {}

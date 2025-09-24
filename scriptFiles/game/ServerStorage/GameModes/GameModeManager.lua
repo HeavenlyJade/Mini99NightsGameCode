@@ -6,7 +6,6 @@ local EventPlayerConfig = require(MainStorage.Code.Event.EventPlayer) ---@type E
 
 -- 预加载所有可用的游戏模式，以避免在运行时动态require
 local AVAILABLE_MODES = {
-    [EventPlayerConfig.GAME_MODES.RACE_GAME] = require(ServerStorage.GameModes.Modes.RaceGameMode) ---@type RaceGameMode
     -- 未来如果新增其他模式，在这里添加即可
 }
 

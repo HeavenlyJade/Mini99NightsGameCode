@@ -21,9 +21,8 @@ local BagMgr = require(ServerStorage.MSystems.Bag.BagMgr) ---@type BagMgr
 local LotteryMgr = require(ServerStorage.MSystems.Lottery.LotteryMgr) ---@type LotteryMgr
 
 local MPlayer       = require(ServerStorage.EntityTypes.MPlayer)          ---@type MPlayer
-local PlayerInitMgr = require(ServerStorage.MSystems.PlayerInitMgr) ---@type PlayerInitMgr
 
-local cloudDataMgr  = require(ServerStorage.CloundDataMgr.MCloudDataMgr)    ---@type MCloudDataMgr
+local MCloudDataMgr = require(ServerStorage.Manager.MCloudDataMgr) ---@type MCloudDataMgr
 local NodeCloneGenerator = require(ServerStorage.ServerUntils.NodeCloneGenerator) ---@type NodeCloneGenerator
 local MPlayerTraitManager = require(ServerStorage.Manager.MPlayerTraitManager) ---@type MPlayerTraitManager
 
@@ -100,7 +99,7 @@ function MServerInitPlayer.player_enter_game(player)
     player_actor_.Movespeed = 400
 
     --加载数据   1 玩家历史等级经验值
-    local ret1_, cloud_player_data_ = cloudDataMgr.ReadPlayerData(uin_)
+    local ret1_, cloud_player_data_ = MCloudDataMgr.ReadPlayerData(uin_)
     if ret1_ == 0 then
         --gg.log('clould_player_data ok:', uin_, cloud_player_data_)
         gg.network_channel:fireClient(uin_, { cmd="cmd_client_show_msg", txt='加载玩家等级数据成功' })     --飘字
@@ -137,7 +136,7 @@ function MServerInitPlayer.player_enter_game(player)
     })
 
     -- 读取任务数据
-    cloudDataMgr.ReadGameTaskData(player_)
+    MCloudDataMgr.ReadGameTaskData(player_)
 
 
     player_actor_.Size = Vector3.New(120, 160, 120)      --碰撞盒子的大小
@@ -164,12 +163,8 @@ function MServerInitPlayer.player_enter_game(player)
                        not cloud_player_data_.vars or 
                        next(cloud_player_data_.vars) == nil
     
-    if isNewPlayer then
-        PlayerInitMgr.InitializeNewPlayer(player_)
-    end
-    
-    -- 已移除：伙伴/宠物/翅膀/尾迹模型更新
 
+    
     MServerInitPlayer.syncPlayerDataToClient(player_)
     MServerInitPlayer.EnsureDecorativeObjectsSync(player_actor_,player_)
     

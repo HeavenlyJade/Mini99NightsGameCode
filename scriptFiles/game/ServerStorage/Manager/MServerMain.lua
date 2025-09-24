@@ -119,13 +119,9 @@ function MainServer.initModule()
     local CommandManager = require(ServerStorage.CommandSys.MCommandMgr)
     local BagEventManager = require(ServerStorage.MSystems.Bag.BagEventManager) ---@type BagEventManager
     local MailEventManager = require(ServerStorage.MSystems.Mail.MailEventManager) ---@type MailEventManager
-    -- 已移除：宠物/伙伴/翅膀/尾迹事件管理器
     local GlobalMailManager = require(ServerStorage.MSystems.Mail.GlobalMailManager) ---@type GlobalMailManager
-    local RaceGameEventManager = require(ServerStorage.GameModes.Modes.RaceGameEventManager) ---@type RaceGameEventManager
-    -- 已移除：成就与奖励事件管理器
     local LotteryEventManager = require(ServerStorage.MSystems.Lottery.LotteryEventManager) ---@type LotteryEventManager
     local ShopEventManager = require(ServerStorage.MSystems.Shop.ShopEventManager) ---@type ShopEventManager
-    -- 已移除：奖励加成事件管理器
     local CommonEventManager = require(ServerStorage.MiniGameMgr.CommonEventManager) ---@type CommonEventManager
     local RankingEventManager = require(ServerStorage.MSystems.Ranking.RankingEventManager) ---@type RankingEventManager
     local SceneInteractionEventManager = require(ServerStorage.SceneInteraction.SceneInteractionEventManager) ---@type SceneInteractionEventManager
@@ -136,7 +132,6 @@ function MainServer.initModule()
 
     BagEventManager.Init()
     MailEventManager.Init()
-    RaceGameEventManager.Init()
     LotteryEventManager.Init()
     ShopEventManager.Init()
     CommonEventManager.Init()

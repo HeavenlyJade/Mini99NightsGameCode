@@ -14,7 +14,6 @@ local EventPlayerConfig = require(MainStorage.Code.Event.EventPlayer) ---@type E
 -- 引入相关系统
 local ShopMgr = require(ServerStorage.MSystems.Shop.ShopMgr) ---@type ShopMgr
 local MPlayer = require(ServerStorage.EntityTypes.MPlayer) ---@type MPlayer
-local PartnerEventManager = require(ServerStorage.MSystems.Pet.EventManager.PartnerEventManager) ---@type PartnerEventManager
 
 ---@class ShopEventManager
 local ShopEventManager = {}
@@ -75,11 +74,28 @@ end
 
 -- 事件处理函数 --------------------------------------------------------
 
+function ShopEventManager.ValidatePlayer(evt)
+    local env_player = evt.player
+    local uin = env_player.uin
+    if not uin then
+        --gg.log("背包事件缺少玩家UIN参数")
+        return nil
+    end
+
+    local MServerDataManager = require(ServerStorage.Manager.MServerDataManager) ---@type MServerDataManager
+    local player = MServerDataManager.getPlayerByUin(uin)
+    if not player then
+        --gg.log("背包事件找不到玩家: " .. uin)
+        return nil
+    end
+
+    return player
+end
 --- 【修改】处理非迷你币购买请求
 ---@param evt table 事件对象
 function ShopEventManager.HandlePurchaseItem(evt)
     gg.log("处理非迷你币购买请求", evt)
-    local player = PartnerEventManager.ValidatePlayer(evt)
+    local player = ShopEventManager.ValidatePlayer(evt)
     local args = evt.args or {}
     
     if not player then

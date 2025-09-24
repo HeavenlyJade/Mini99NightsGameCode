@@ -1,7 +1,7 @@
 local script = script
 local game = game
 local MainStorage  = game:GetService('MainStorage')
-local ClientCustomUI = require(MainStorage.code.common.customUi.ClientCustomUI) ---@type ClientCustomUI
+-- local ClientCustomUI = require(MainStorage.code.common.customUi.ClientCustomUI) ---@type ClientCustomUI
 
 -- 初始化成就路径
 local function InitAchievementPaths(ui)
@@ -51,4 +51,4 @@ local function InitAchievementPaths(ui)
     }
 end
 
-return ClientCustomUI.Load(script.Parent, InitAchievementPaths)
+-- return ClientCustomUI.Load(script.Parent, InitAchievementPaths)

@@ -1,7 +1,6 @@
 -- scriptFiles/game/ServerStorage/SceneInteraction/SceneInteractionEventManager.lua
 -- 场景交互事件管理器，负责处理与场景节点相关的客户端请求
 local ServerStorage = game:GetService("ServerStorage")
-local MainStorage = game:GetService("MainStorage")
 
 local MServerDataManager = require(ServerStorage.Manager.MServerDataManager) ---@type MServerDataManager
 ---@class SceneInteractionEventManager

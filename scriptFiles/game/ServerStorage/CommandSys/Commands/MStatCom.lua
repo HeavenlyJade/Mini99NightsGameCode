@@ -4,11 +4,6 @@ local MainStorage = game:GetService("MainStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
 local gg = require(MainStorage.Code.Untils.MGlobal) ---@type gg
-local MPlayer = require(ServerStorage.EntityTypes.MPlayer) ---@type MPlayer
-local cloudDataMgr = require(ServerStorage.CloundDataMgr.MCloudDataMgr) ---@type MCloudDataMgr
-local AttributeMapping = require(MainStorage.Code.Common.Icon.AttributeMapping) ---@type AttributeMapping
-local BonusCalculator = require(ServerStorage.ServerUntils.BonusCalculator) ---@type BonusCalculator
-local ConfigLoader = require(MainStorage.Code.Common.ConfigLoader)
 local EventPlayerConfig = require(MainStorage.Code.Event.EventPlayer) ---@type EventPlayerConfig
 
 ---@class StatCommand
@@ -17,26 +12,11 @@ local StatCommand = {}
 -- 子命令处理器
 StatCommand.handlers = {}
 
---- 计算基础值 - 新增核心逻辑
----@param inputValue number 输入的数值
----@param player MPlayer 玩家对象
----@param statName string 属性名称
----@return number 基础值
-local function _calculateBaseValue(inputValue, player, statName)
-    -- 如果输入值大于0，直接使用输入值作为基础值
-    if inputValue > 0 then
-        return inputValue
-    end
-    
-    -- 输入值为0时，获取玩家当前属性值作为基础值
-    local currentValue = player:GetStat(statName) or 0
-    return currentValue
-end
 
 
 
 
---- 新增属性值 - 优化版
+--- 新增属性值
 ---@param params table 参数表，包含属性名、数值等信息
 ---@param player MPlayer 玩家对象
 ---@return boolean 是否执行成功
@@ -59,28 +39,21 @@ function StatCommand.handlers.add(params, player)
         return false
     end
 
-    -- 计算基础值
-    local baseValue = _calculateBaseValue(inputValue, player, statName)
-    
-    -- 计算所有加成
-    local finalValue, bonusInfo = BonusCalculator.CalculateAllBonuses(
-        player, baseValue, playerStatBonuses, playerVariableBonuses, otherBonuses, statName,"属性计算")
-    
-    local valueToAdd = finalValue * finalMultiplier
+    -- 忽略加成参数，直接使用输入值
+    local valueToAdd = inputValue * finalMultiplier
     local oldValue = player:GetStat(statName)
 
     -- 新增 = 当前值 + 增加值
     player:AddStat(statName, valueToAdd, true)
     local newValue = player:GetStat(statName)
 
-    gg.log(string.format("新增玩家 %s 属性 '%s': %s + %s = %s (基础: %s, 计算: %s, 倍率: %s) %s", 
-        player.name, statName, tostring(oldValue), tostring(valueToAdd), tostring(newValue), 
-        tostring(baseValue), tostring(finalValue), tostring(finalMultiplier), bonusInfo))
+    gg.log(string.format("新增玩家 %s 属性 '%s': %s + %s = %s (倍率: %s)", 
+        player.name, statName, tostring(oldValue), tostring(valueToAdd), tostring(newValue), tostring(finalMultiplier)))
     
     return true
 end
 
---- 设置属性值 - 优化版
+--- 设置属性值
 ---@param params table 参数表，包含属性名、数值等信息
 ---@param player MPlayer 玩家对象
 ---@return boolean 是否执行成功
@@ -103,28 +76,21 @@ function StatCommand.handlers.set(params, player)
         return false
     end
     
-    -- 计算基础值 - 核心逻辑改进
-    local baseValue = _calculateBaseValue(inputValue, player, statName)
-    
-    -- 计算所有加成
-    local finalValue, bonusInfo = BonusCalculator.CalculateAllBonuses(
-        player, baseValue, playerStatBonuses, playerVariableBonuses, otherBonuses, statName,"属性计算")
-    
-    local valueToSet = finalValue * finalMultiplier
+    -- 忽略加成参数，直接使用输入值
+    local valueToSet = inputValue * finalMultiplier
     
     -- 执行设置
     player:SetStat(statName, valueToSet, true)
     local actualValue = player:GetStat(statName)
     
     -- 记录日志
-    gg.log(string.format("设置玩家 %s 属性 '%s' = %s (基础: %s, 计算: %s, 倍率: %s) %s", 
-        player.name, statName, tostring(actualValue), tostring(baseValue), 
-        tostring(finalValue), tostring(finalMultiplier), bonusInfo))
+    gg.log(string.format("设置玩家 %s 属性 '%s' = %s (倍率: %s)", 
+        player.name, statName, tostring(actualValue), tostring(finalMultiplier)))
     
     return true
 end
 
---- 减少属性值 - 优化版
+--- 减少属性值
 ---@param params table 参数表，包含属性名、数值等信息
 ---@param player MPlayer 玩家对象
 ---@return boolean 是否执行成功
@@ -147,29 +113,22 @@ function StatCommand.handlers.reduce(params, player)
         return false
     end
 
-    -- 计算基础值
-    local baseValue = _calculateBaseValue(inputValue, player, statName)
-    
-    -- 计算所有加成
-    local finalValue, bonusInfo = BonusCalculator.CalculateAllBonuses(
-        player, baseValue, playerStatBonuses, playerVariableBonuses, otherBonuses, statName,"属性计算")
-    
-    local valueToReduce = finalValue * finalMultiplier
+    -- 忽略加成参数，直接使用输入值
+    local valueToReduce = inputValue * finalMultiplier
     local oldValue = player:GetStat(statName)
 
     -- 减少 = 当前值 - 减少值
     player:AddStat(statName, -valueToReduce, true)
     local newValue = player:GetStat(statName)
 
-    gg.log(string.format("减少玩家 %s 属性 '%s': %s - %s = %s (基础: %s, 计算: %s, 倍率: %s) %s", 
-        player.name, statName, tostring(oldValue), tostring(valueToReduce), tostring(newValue), 
-        tostring(baseValue), tostring(finalValue), tostring(finalMultiplier), bonusInfo))
+    gg.log(string.format("减少玩家 %s 属性 '%s': %s - %s = %s (倍率: %s)", 
+        player.name, statName, tostring(oldValue), tostring(valueToReduce), tostring(newValue), tostring(finalMultiplier)))
     
     return true
 end
 
 
---- 仅应用加成（不包含基础数值）- 优化版
+--- 仅应用加成（不包含基础数值）
 ---@param params table 参数表，包含属性名、加成信息等
 ---@param player MPlayer 玩家对象
 ---@return boolean 是否执行成功
@@ -186,24 +145,18 @@ function StatCommand.handlers.bonusonly(params, player)
         return false
     end
 
-    -- 使用BonusCalculator计算加成，基础值设为0
-    local finalValue, bonusInfo = BonusCalculator.CalculateAllBonuses(player, 0, playerStatBonuses, playerVariableBonuses, otherBonuses, statName,"属性计算")
-    
-    -- 只应用加成部分，不包含基础值
-    local bonusValue = finalValue - 0  -- 减去基础值0，得到纯加成值
-    
-    -- 应用最终倍率
-    local finalBonusValue = bonusValue * finalMultiplier
+    -- 忽略加成参数，不应用任何加成
+    local finalBonusValue = 0
     
     if finalBonusValue ~= 0 then
         player:AddStat(statName, finalBonusValue, true)
         local newValue = player:GetStat(statName)
         
-        gg.log(string.format("成功为玩家 %s 的属性 '%s' 应用加成 %s (最终倍率: %s)，新值为: %s %s", 
-            player.name, statName, tostring(finalBonusValue), tostring(finalMultiplier), tostring(newValue), bonusInfo))
+        gg.log(string.format("成功为玩家 %s 的属性 '%s' 应用加成 %s (最终倍率: %s)，新值为: %s", 
+            player.name, statName, tostring(finalBonusValue), tostring(finalMultiplier), tostring(newValue)))
     else
-        gg.log(string.format("玩家 %s 的属性 '%s' 没有可应用的加成，保持原值 %s", 
-            player.name, statName, bonusInfo))
+        gg.log(string.format("玩家 %s 的属性 '%s' 没有可应用的加成，保持原值", 
+            player.name, statName))
     end
     
     return true
@@ -332,7 +285,7 @@ return StatCommand
 --   "来源": "装备"  -- 可选，默认为"COMMAND"
 -- }
 --
--- 2. 包含玩家属性加成的操作
+-- 2. 包含玩家属性加成的操作（加成参数会被忽略）
 -- {
 --   "操作类型": "新增",
 --   "属性名": "战力值",
@@ -346,7 +299,7 @@ return StatCommand
 --   ]
 -- }
 --
--- 3. 包含玩家变量加成的操作
+-- 3. 包含玩家变量加成的操作（加成参数会被忽略）
 -- {
 --   "操作类型": "新增",
 --   "属性名": "战力值",
@@ -360,7 +313,7 @@ return StatCommand
 --   ]
 -- }
 --
--- 4. 包含其他加成的操作
+-- 4. 包含其他加成的操作（加成参数会被忽略）
 -- {
 --   "操作类型": "新增",
 --   "属性名": "战力值",
@@ -368,7 +321,7 @@ return StatCommand
 --   "其他加成": ["伙伴"]
 -- }
 --
--- 5. 完整加成配置示例（包含伙伴属性加成）
+-- 5. 完整加成配置示例（所有加成参数都会被忽略）
 -- {
 --   "操作类型": "新增",
 --   "属性名": "战力值",
@@ -389,13 +342,8 @@ return StatCommand
 --   ],
 --   "其他加成": ["伙伴"]
 -- }
--- 
--- 注意：当配置"其他加成": ["伙伴"]时，玩家属性加成中的"数据_固定值_攻击力"
--- 不仅会读取玩家当前的属性值，还会从伙伴携带效果中读取同名的属性配置
--- 例如：如果伙伴携带了"数据_固定值_攻击力"的固定值或百分比加成，
--- 这些加成也会被计算到玩家属性加成中
 --
--- 6. 仅应用加成（不包含基础数值）
+-- 6. 仅应用加成（不包含基础数值，加成参数会被忽略）
 -- {
 --   "操作类型": "仅加成新增",
 --   "属性名": "战力值",
@@ -416,17 +364,7 @@ return StatCommand
 --   "其他加成": ["伙伴"]
 -- }
 --
--- 7. 测试加成计算
--- {
---   "操作类型": "测试加成",
---   "基础值": 100,
---   "目标属性": "战力值",
---   "玩家属性加成": [...],
---   "玩家变量加成": [...],
---   "其他加成": [...]
--- }
---
--- 8. 其他操作
+-- 7. 其他操作
 -- {
 --   "操作类型": "查看"  -- 查看属性
 -- }

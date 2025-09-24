@@ -1,6 +1,7 @@
 -- VariableNameConfig.lua
 -- Generated from VariableNames.json. Any custom code will be overwritten.
 
+---@class VariableNameConfig
 local VariableNameConfig = {Data = {}}
 
 VariableNameConfig.VariableNames = {

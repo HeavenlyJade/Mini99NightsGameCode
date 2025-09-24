@@ -122,28 +122,6 @@ function BaseUntils.DeductCosts(player, costs)
     return true
 end
 
---- 计算玩家变量加成（重定向到BonusManager，保持向后兼容）
----@param player MPlayer 玩家对象
----@param baseValue number 基础操作数值
----@param variableBonuses table 玩家变量加成列表
----@return number totalBonusValue, string bonusInfo
-function BaseUntils.CalculateBonuses(player, baseValue, variableBonuses)
-    local BonusManager = require(ServerStorage.BonusManager.BonusManager) ---@type BonusManager
-    -- 兼容旧接口，targetVariable为nil表示应用所有加成
-    return BonusManager.CalculatePlayerVariableBonuses(player, baseValue, variableBonuses, nil)
-end
 
---- 新增：统一奖励计算接口 - 直接调用BonusManager
----@param player MPlayer 玩家对象
----@param baseRewards table 基础奖励
----@param bonusContext table 加成上下文
----@return table 最终奖励
-function BaseUntils.CalculateUnifiedRewards(player, baseRewards, bonusContext)
-    local BonusManager = require(ServerStorage.BonusManager.BonusManager)
-    
-    --gg.log("[BaseUntils] CalculateUnifiedRewards被调用，重定向到BonusManager.CalculateUnifiedRewards")
-    
-    return BonusManager.CalculateUnifiedRewards(player, baseRewards, bonusContext)
-end
 
 return BaseUntils

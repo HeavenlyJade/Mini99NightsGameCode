@@ -8,7 +8,6 @@ local ClassMgr = require(MainStorage.Code.Untils.ClassMgr)
 local SceneNodeHandlerBase = require(ServerStorage.SceneInteraction.SceneNodeHandlerBase) ---@type SceneNodeHandlerBase
 local gg = require(MainStorage.Code.Untils.MGlobal)
 local CommandManager = require(ServerStorage.CommandSys.MCommandMgr) ---@type CommandManager
-local BonusManager = require(ServerStorage.BonusManager.BonusManager) ---@type BonusManager
 local ActionCosteRewardCal = require(MainStorage.Code.GameReward.RewardCalc.ActionCosteRewardCal) ---@type ActionCosteRewardCal
 
 ---@class IdleSpotHandler : SceneNodeHandlerBase

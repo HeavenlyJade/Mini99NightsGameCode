@@ -3,7 +3,7 @@ local ClassMgr = require(MainStorage.Code.Untils.ClassMgr) ---@type ClassMgr
 local ViewBase = require(MainStorage.Code.Client.UI.ViewBase) ---@type ViewBase
 local gg = require(MainStorage.Code.Untils.MGlobal) ---@type gg
 local ClientEventManager = require(MainStorage.Code.Client.Event.ClientEventManager) ---@type ClientEventManager
-local ClientScheduler = require(MainStorage.Code.Client.ClientScheduler) ---@type ClientScheduler
+local ClientScheduler = require(MainStorage.Code.Client.ClientCore.ClientScheduler) ---@type ClientScheduler
 
 ---@class TextInfo
 ---@field node UITextLabel
