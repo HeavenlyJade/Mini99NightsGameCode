@@ -1,6 +1,5 @@
 local MainStorage = game:GetService('MainStorage')
 local ConfigLoader = require(MainStorage.Code.Common.ConfigLoader) ---@type ConfigLoader
-local ItemQualityConfig = require(MainStorage.Code.Common.Config.ItemQualityConfig) ---@type ItemQualityConfig
 local gg = require(MainStorage.Code.Untils.MGlobal) ---@type gg
 
 ---@class ItemUtils 物品工具类
@@ -195,12 +194,7 @@ function ItemUtils.GetPower(itemData)
         return 0
     end
 
-    local quality = nil
-    if itemData.quality then
-        quality = ItemQualityConfig[itemData.quality]
-    end
-    
-    return itemType:CalculatePower(itemData.enhanceLevel or 0, quality)
+    return itemType:CalculatePower(itemData.enhanceLevel or 0, itemData.quality)
 end
 
 ---获取物品显示内容
@@ -371,12 +365,7 @@ function ItemUtils.GetSortWeight(itemData)
     end
     
     -- 按品质排序
-    if itemData.quality then
-        local qualityConfig = ItemQualityConfig[itemData.quality]
-        if qualityConfig then
-            weight = weight - (qualityConfig.level or 0) * 100
-        end
-    end
+    -- 品质由 ItemType 内部处理或按字符串展示，这里不额外加权
     
     -- 按强化等级排序
     weight = weight - (itemData.enhanceLevel or 0) * 10

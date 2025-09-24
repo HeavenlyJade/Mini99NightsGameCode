@@ -4,7 +4,6 @@ local ClassMgr = require(MainStorage.Code.Untils.ClassMgr) ---@type ClassMgr
 local gg = require(MainStorage.Code.Untils.MGlobal) ---@type gg
 local ConfigLoader = require(MainStorage.Code.Common.ConfigLoader) ---@type ConfigLoader
 local ItemType = require(MainStorage.Code.Common.TypeConfig.ItemType) ---@type ItemType
-local ItemQualityConfig = require(MainStorage.Code.Common.Config.ItemQualityConfig) ---@type ItemQualityConfig
 
 
 ---@class SerializedItem
@@ -69,7 +68,7 @@ function Item:PrintContent()
 
     if self:IsEquipment() then
         if self.quality then
-            table.insert(content, "品质: " .. (self.quality and self.quality.name or "未知"))
+            table.insert(content, "品质: " .. tostring(self.quality))
         end
         if self.enhanceLevel > 0 then
             table.insert(content, "强化: " .. self.enhanceLevel)
@@ -94,10 +93,8 @@ function Item:Load(data)
     end
 
     if self:IsEquipment() then
-        if data.quality == nil then
-            self.quality = ItemQualityConfig:GetRandomQuality()
-        else
-            self.quality = ItemQualityConfig.Get(data.quality)
+        if data.quality ~= nil then
+            self.quality = data.quality
         end
     end
 end
@@ -119,7 +116,7 @@ function Item:Save()
         itype = self.itemType.name,
     }
     if self.quality then
-        d.quality = self.quality.name
+        d.quality = self.quality
     end
     return d
 end
@@ -149,12 +146,6 @@ function Item:GetStat()
         local enhanceMultiplier = 1 + (self.enhanceLevel * enhanceRate)
         for attrId, value in pairs(baseAttributes) do
             stats[attrId] = value * enhanceMultiplier
-        end
-    end
-
-    if self.quality then
-        for attrId, value in pairs(baseAttributes) do
-            stats[attrId] = value * self.quality.multiplier
         end
     end
 
