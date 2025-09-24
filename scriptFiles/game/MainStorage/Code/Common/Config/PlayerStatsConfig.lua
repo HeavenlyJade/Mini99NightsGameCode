@@ -1,4 +1,4 @@
-﻿-- PlayerStatsConfig.lua
+-- PlayerStatsConfig.lua
 -- Generated from PlayerStats.json. Any custom code will be overwritten.
 
 -- --- AUTO GENERATED CONFIG BEGIN ---

@@ -1,4 +1,4 @@
-﻿-- EquipmentConfig.lua
+-- EquipmentConfig.lua
 
 local EquipmentConfig = {
     ['斧头1级'] = {
