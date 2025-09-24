@@ -42,6 +42,22 @@ local EverDayConfig = {
 }
 
 
+local PlayerStatsConfig = {
+    ['生命'] = 'health',
+    ['最大生命值'] = 'max_health',
+    ['每秒生命恢复'] = 'health_regen',
+    ['饥饿度'] = 'hunger',
+    ['最大饥饿值'] = 'max_hunger',
+    ['每秒减少饥饿度'] = 'hunger_decay',
+    ['攻击力'] = 'attack_power',
+    ['防御力'] = 'defense',
+    ['攻击速度'] = 'attack_speed',
+    ['换单速度'] = 'switch_speed',
+    ['交互速度'] = 'interact_speed',
+    ['采集速度'] = 'gather_speed',
+    ['砍伐速度'] = 'chop_speed',
+}
+
 
 --所有配置( 其他所有的配置文件将汇总到这里， 游戏逻辑代码只需要require这个文件即可 )
 ---@class common_config
@@ -54,7 +70,8 @@ local common_config = {
     ItemTypeEnum = ItemTypeEnum,
     ItemTypeNames = ItemTypeNames,
     CommandExecutionConfig = CommandExecutionConfig,
-    EverDayConfig =EverDayConfig
+    EverDayConfig =EverDayConfig,
+    PlayerStatsConfig = PlayerStatsConfig
 }
 
 
