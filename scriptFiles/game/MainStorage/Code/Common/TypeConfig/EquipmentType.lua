@@ -9,7 +9,15 @@ local MConfig = require(MainStorage.Code.Common.GameConfig.MConfig) ---@type com
 ---@field description string 描述
 ---@field icon string 资源图标
 ---@field model string 资源模型
+---@field modelCache string 模型资源缓存位置
+---@field localPosition number[] 模型局部位置
+---@field localEulerAngles number[] 模型局部欧拉角
+---@field localScale number[] 模型局部规模
+---@field useLocalPosition boolean 是否启用模型局部位置
+---@field useLocalEulerAngles boolean 是否启用模型局部欧拉角
+---@field useLocalScale boolean 是否启用模型局部规模
 ---@field equipmentCategory string 装备类型
+---@field damageType any 伤害类型
 ---@field attackRange number 攻击距离
 ---@field damage number 伤害
 ---@field attackSpeed number 攻速
@@ -32,7 +40,15 @@ function EquipmentType:OnInit(data)
 	self.description = data["描述"] or ""
 	self.icon = data["资源图标"] or ""
 	self.model = data["资源模型"] or ""
+	self.modelCache = data["模型资源缓存位置"] or ""
+	self.localPosition = data["模型局部位置"] or { 0, 0, 0 }
+	self.localEulerAngles = data["模型局部欧拉角"] or { 0, 0, 0 }
+	self.localScale = data["模型局部规模"] or { 1, 1, 1 }
+	self.useLocalPosition = data["是否启用模型局部位置"] or false
+	self.useLocalEulerAngles = data["是否启用模型局部欧拉角"] or false
+	self.useLocalScale = data["是否启用模型局部规模"] or false
 	self.equipmentCategory = data["装备类型"] or ""
+	self.damageType = data["伤害类型"]
 
 	-- 数值参数
 	self.attackRange = data["攻击距离"] or 0

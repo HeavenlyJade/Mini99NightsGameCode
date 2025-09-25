@@ -7,7 +7,6 @@ local MainStorage = game:GetService('MainStorage')
 -- 引用所有 Type 的定义
 
 local ItemType = require(MainStorage.Code.Common.TypeConfig.ItemType)
-local SkillTypes = require(MainStorage.Code.Common.TypeConfig.SkillTypes) 
 local LevelType = require(MainStorage.Code.Common.TypeConfig.LevelType)
 local PlayerInitType = require(MainStorage.Code.Common.TypeConfig.PlayerInitType)
 local SceneNodeType = require(MainStorage.Code.Common.TypeConfig.SceneNodeType)
@@ -69,7 +68,6 @@ function ConfigLoader.Init()
     ConfigLoader.LoadConfig(LevelConfig, LevelType, ConfigLoader.Levels, "Level")
     ConfigLoader.LoadConfig(PlayerInitConfig, PlayerInitType, ConfigLoader.PlayerInits, "PlayerInit")
     ConfigLoader.LoadConfig(SceneNodeConfig, SceneNodeType, ConfigLoader.SceneNodes, "SceneNode")
-    ConfigLoader.LoadConfig(SkillConfig, SkillTypes, ConfigLoader.Skills, "Skill")
     ConfigLoader.LoadConfig(LotteryConfig, LotteryType, ConfigLoader.Lotteries, "Lottery")
     ConfigLoader.LoadConfig(TeleportPointConfig, TeleportPointType, ConfigLoader.TeleportPoints, "TeleportPoint")
     -- 构建迷你币商品映射表
@@ -132,13 +130,6 @@ end
 function ConfigLoader.GetAllItems()
     return ConfigLoader.Items
 end
-
----@param id string
----@return table -- SkillTypes 实现后应返回 SkillType
-function ConfigLoader.GetSkill(id)
-    return ConfigLoader.Skills[id]
-end
-
 
 
 function ConfigLoader.GetLevel(id)
