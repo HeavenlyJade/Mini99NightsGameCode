@@ -13,15 +13,23 @@ local SceneNodeType = require(MainStorage.Code.Common.TypeConfig.SceneNodeType)
 local LotteryType = require(MainStorage.Code.Common.TypeConfig.LotteryType) ---@type LotteryType
 local ShopItemType = require(MainStorage.Code.Common.TypeConfig.ShopItemType) ---@type ShopItemType
 local TeleportPointType = require(MainStorage.Code.Common.TypeConfig.TeleportPointType) ---@type TeleportPointType
+local EquipmentType = require(MainStorage.Code.Common.TypeConfig.EquipmentType) ---@type EquipmentType
+local ProfessionType = require(MainStorage.Code.Common.TypeConfig.ProfessionType) ---@type ProfessionType
+local SkillType = require(MainStorage.Code.Common.TypeConfig.SkillType) ---@type SkillType
+local BuffType = require(MainStorage.Code.Common.TypeConfig.BuffType) ---@type BuffType
 -- 引用所有 Config 的原始数据
 local ItemTypeConfig = require(MainStorage.Code.Common.Config.ItemTypeConfig)
-local SkillConfig = require(MainStorage.Code.Common.Config.SkillConfig)
+-- local SkillConfig = require(MainStorage.Code.Common.Config.SkillConfig) -- 旧版技能配置，保留注释
 local LevelConfig = require(MainStorage.Code.Common.Config.LevelConfig)
 local SceneNodeConfig = require(MainStorage.Code.Common.Config.SceneNodeConfig)
 local PlayerInitConfig = require(MainStorage.Code.Common.Config.PlayerInitConfig)
 local LotteryConfig = require(MainStorage.Code.Common.Config.LotteryConfig)
 local ShopItemConfig = require(MainStorage.Code.Common.Config.ShopItemConfig)
 local TeleportPointConfig = require(MainStorage.Code.Common.Config.TeleportPointConfig)
+local EquipmentConfig = require(MainStorage.Code.Common.Config.EquipmentConfig)
+local ProfessionConfig = require(MainStorage.Code.Common.Config.ProfessionConfig)
+local SkillConfigConfig = require(MainStorage.Code.Common.Config.SkillConfigConfig)
+local BuffConfig = require(MainStorage.Code.Common.Config.BuffConfig)
 
 
 ---@class ConfigLoader
@@ -30,6 +38,9 @@ local ConfigLoader = {}
 -- 用来存放实例化后的配置对象
 ConfigLoader.Items = {}
 ConfigLoader.Skills = {}
+ConfigLoader.Equipments = {}
+ConfigLoader.Professions = {}
+ConfigLoader.Buffs = {}
 ConfigLoader.Levels = {}
 ConfigLoader.LevelNodeRewards = {} -- 新增关卡节点奖励配置存储
 ConfigLoader.SceneNodes = {}
@@ -47,7 +58,7 @@ ConfigLoader.MiniShopItems = {} -- 迷你币商品映射表：miniItemId -> Shop
 function ConfigLoader.LoadConfig(configData, typeClass, storageTable, configName)
     -- 检查Type定义是否是一个有效的类（包含New方法）
     if not typeClass or not typeClass.New then
-        print(string.format("Warning: No valid Type class found for %s. Raw data will be stored.", configName))
+        print(string.format("警告：未找到 %s 的有效 Type 类。原始数据将被存储", configName))
         -- 如果没有对应的Type类，可以选择直接存储原始数据
         for id, data in pairs(configData.Data) do
             storageTable[id] = data
@@ -70,6 +81,10 @@ function ConfigLoader.Init()
     ConfigLoader.LoadConfig(SceneNodeConfig, SceneNodeType, ConfigLoader.SceneNodes, "SceneNode")
     ConfigLoader.LoadConfig(LotteryConfig, LotteryType, ConfigLoader.Lotteries, "Lottery")
     ConfigLoader.LoadConfig(TeleportPointConfig, TeleportPointType, ConfigLoader.TeleportPoints, "TeleportPoint")
+    ConfigLoader.LoadConfig(EquipmentConfig, EquipmentType, ConfigLoader.Equipments, "Equipment")
+    ConfigLoader.LoadConfig(ProfessionConfig, ProfessionType, ConfigLoader.Professions, "Profession")
+    ConfigLoader.LoadConfig(SkillConfigConfig, SkillType, ConfigLoader.Skills, "Skill")
+    ConfigLoader.LoadConfig(BuffConfig, BuffType, ConfigLoader.Buffs, "Buff")
     -- 构建迷你币商品映射表
     ConfigLoader.LoadConfig(ShopItemConfig, ShopItemType, ConfigLoader.ShopItems, "ShopItem")
 
