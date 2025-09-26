@@ -61,10 +61,8 @@ function SceneNodeHandlerBase:OnEntityLeave(entity)
     if entity and entity.isPlayer then
         ---@cast entity MPlayer
         local ServerDataManager = require(ServerStorage.Manager.MServerDataManager) ---@type MServerDataManager
-        
         -- 从当前场景节点移除玩家
         self.players[entity.uin] = nil
-        
         -- 清理玩家的场景节点映射
         ServerDataManager.ClearPlayerSceneNode(entity.uin)
         
@@ -105,31 +103,7 @@ function SceneNodeHandlerBase:CleanupPlayerData(player)
     self:OnPlayerDataCleanup(player)
 end
 
----用于周期性更新，需要子类设置 self.updateInterval > 0 才会启用
-function SceneNodeHandlerBase:OnUpdate()
-    if next(self.players) == nil then
-        return
-    end
 
-    for _, player in pairs(self.players) do
-        if player and player.update_player then
-            player:update_player()
-        end
-    end
-    for _, monster in pairs(self.monsters) do
-        if monster and monster.update_monster then
-            monster:update_monster()
-        end
-    end
-    for _, npc in pairs(self.npcs) do
-        if npc and npc.update_npc then
-            npc:update_npc()
-        end
-    end
-end
-
-
----销毁时调用
 ---销毁时调用
 function SceneNodeHandlerBase:OnDestroy()
     if self.updateTask then
@@ -163,7 +137,6 @@ function SceneNodeHandlerBase:ForceEntityLeave(entity)
         self:OnEntityLeave(entity)
     end
 end
-
 
 --------------------------------------------------------------------------------
 -- 基类核心逻辑

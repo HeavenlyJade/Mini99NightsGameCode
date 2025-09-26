@@ -1,7 +1,8 @@
-﻿-- VariableNameConfig.lua
+-- VariableNameConfig.lua
 -- Generated from VariableNames.json. Any custom code will be overwritten.
 
 -- --- AUTO GENERATED CONFIG BEGIN ---
+---@class VariableNameConfig
 local VariableNameConfig = {
     VariableNames = {
         '数据_固定值_伐木工砍伐高级树木数量',

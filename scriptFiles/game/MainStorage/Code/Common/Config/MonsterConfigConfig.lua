@@ -1,4 +1,4 @@
-﻿-- MonsterConfigConfig.lua
+-- MonsterConfigConfig.lua
 
 local MonsterConfigConfig = {
     ['恐怖小鹿'] = {

@@ -1,4 +1,4 @@
-﻿-- SkillConfigConfig.lua
+-- SkillConfigConfig.lua
 
 local SkillConfigConfig = {
     ['中级伐木技能'] = {
