@@ -10,6 +10,89 @@ local ConfigLoader = require(MainStorage.Code.Common.ConfigLoader) ---@type Conf
 ---@class ShopCommand
 local ShopCommand = {}
 
+--- 补记指定商品的购买数据（不发奖、不扣费）
+---@param params table 指令参数
+---@param player MPlayer 执行者（用于反馈）
+---@return boolean 是否成功
+function ShopCommand.appendPurchaseRecord(params, player)
+	local ShopMgr = require(ServerStorage.MSystems.Shop.ShopMgr) ---@type ShopMgr
+	local MServerDataManager = require(ServerStorage.Manager.MServerDataManager) ---@type MServerDataManager
+    gg.log("补记购买数据", params, player)
+	if not player then
+		gg.log("错误：22找不到玩家对象，无法补记购买数据")
+		return false
+	end
+
+	-- 目标玩家（默认当前玩家）
+	local targetUin = tonumber(params["目标玩家UIN"]) or player.uin
+	local targetPlayer = MServerDataManager.getPlayerByUin(targetUin)
+	if not targetPlayer then
+		player:SendHoverText("找不到目标玩家，UIN: " .. tostring(targetUin))
+		return false
+	end
+
+	-- 商品与次数
+	local shopItemId = params["商品ID"]
+	local times = tonumber(params["数量"]) or 1
+	if not shopItemId or shopItemId == "" then
+		player:SendHoverText("缺少'商品ID'")
+		return false
+	end
+	if times <= 0 then times = 1 end
+
+	-- 货币类型（仅用于统计与单次花费累计，不会扣费）：迷你币/金币
+	local currencyType = tostring(params["货币类型"] or "金币")
+
+	-- 获取/创建商城实例
+	local shopInstance = ShopMgr.GetOrCreatePlayerShop(targetPlayer)
+	if not shopInstance then
+		shopInstance = ShopMgr.OnPlayerJoin(targetPlayer)
+	end
+	if not shopInstance then
+		player:SendHoverText("商城系统异常：无法创建玩家商城实例")
+		return false
+	end
+
+	-- 商品配置
+	local shopItem = ConfigLoader.GetShopItem(shopItemId)
+	if not shopItem then
+		player:SendHoverText("商品配置不存在：" .. tostring(shopItemId))
+		return false
+	end
+
+	-- 执行补记（仅记录，不发奖、不扣费）
+	local pricePer = 0
+	if currencyType == "迷你币" then
+		pricePer = shopItem.price and (shopItem.price.miniCoinAmount or 0) or 0
+	elseif currencyType == "金币" then
+		pricePer = shopItem.price and (shopItem.price.amount or 0) or 0
+	end
+
+	for _ = 1, times do
+		shopInstance:UpdatePurchaseRecord(shopItemId, shopItem, currencyType)
+		shopInstance:UpdateLimitCounter(shopItemId, shopItem)
+		-- 手动补统计（因为未走支付流程）
+		if currencyType == "迷你币" and pricePer > 0 then
+			shopInstance.totalPurchaseValue = shopInstance.totalPurchaseValue + pricePer
+		elseif currencyType == "金币" and pricePer > 0 then
+			shopInstance.totalCoinSpent = shopInstance.totalCoinSpent + pricePer
+		end
+	end
+
+	-- 可选保存与推送
+	local shouldSave = params["是否保存"]
+	if shouldSave == nil then shouldSave = true end
+	if shouldSave == true or shouldSave == "true" or shouldSave == 1 or shouldSave == "1" then
+		ShopMgr.SavePlayerShopData(targetUin)
+		ShopMgr.PushShopDataToClient(targetUin)
+	end
+
+	local msg = string.format("已补记购买数据：%s × %d（货币：%s）", shopItem.configName or shopItemId, times, currencyType)
+	player:SendHoverText(msg)
+	gg.log("补记购买数据", targetPlayer.name, shopItemId, times, currencyType)
+	return true
+end
+
 --- 模拟迷你币购买的最终发放
 ---@param params table 指令参数
 ---@param player MPlayer 玩家对象
@@ -168,6 +251,9 @@ end
 
 -- 中文到处理器的映射
 local operationMap = {
+	["补记购买数据"] = "appendPurchaseRecord",
+	["新增购买记录"] = "appendPurchaseRecord",
+	["修复商城数据"] = "appendPurchaseRecord",
 	["模拟迷你币购买"] = "simulateMiniGrant",
 	["模拟迷你币发放"] = "simulateMiniGrant",
 	["查看商城记录"] = "viewShopRecords",
@@ -182,13 +268,13 @@ local operationMap = {
 function ShopCommand.main(params, player)
 	local operationType = params["操作类型"]
 	if not operationType then
-		--player:SendHoverText("缺少'操作类型'字段。有效类型: '模拟迷你币购买'")
+		player:SendHoverText("缺少'操作类型'字段")
 		return false
 	end
 
 	local handlerName = operationMap[operationType]
 	if not handlerName or not ShopCommand[handlerName] then
-		--player:SendHoverText("未知的操作类型: " .. tostring(operationType))
+		player:SendHoverText("未知的操作类型: " .. tostring(operationType))
 		return false
 	end
 

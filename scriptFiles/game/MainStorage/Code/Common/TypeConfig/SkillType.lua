@@ -19,6 +19,9 @@ local MConfig = require(MainStorage.Code.Common.GameConfig.MConfig) ---@type com
 ---@field damage table 技能伤害组成（原始）
 ---@field damageEn table 技能伤害组成（英文结构）
 ---@field damageType any 伤害类型
+---@field attributeConfig table[] 属性配置
+---@field dropItems table[] 掉落物品列表（原始）
+---@field dropItemsEn table[] 掉落物品列表（英文结构）
 ---@field cooldownFormula string 冷却时间公式
 ---@field precheckCosts table[] 消耗前置检查
 ---@field costConfig table[] 消耗配置
@@ -53,6 +56,13 @@ function SkillType:OnInit(data)
 	self.damageEn = self:__buildDamageEn(self.damage)
 	self.damageType = data["伤害类型"]
 
+	-- 属性配置
+	self.attributeConfig = data["属性配置"] or {}
+
+	-- 掉落物品
+	self.dropItems = data["掉落物品列表"] or {}
+	self.dropItemsEn = self:__buildDropItemsEn(self.dropItems)
+
 	-- 冷却与消耗
 	self.cooldownFormula = data["冷却时间公式"] or ""
 	self.precheckCosts = data["消耗前置检查"] or {}
@@ -83,6 +93,24 @@ function SkillType:GetStarReqsEn()
 	return self.starReqsEn
 end
 
+--- 获取属性配置
+---@return table[]
+function SkillType:GetAttributeConfig()
+	return self.attributeConfig
+end
+
+--- 获取掉落物品列表（原始）
+---@return table[]
+function SkillType:GetDropItems()
+	return self.dropItems
+end
+
+--- 获取掉落物品列表（英文结构）
+---@return table[]
+function SkillType:GetDropItemsEn()
+	return self.dropItemsEn
+end
+
 --- 构建伤害英文结构
 ---@param dmg table
 ---@return table
@@ -107,6 +135,22 @@ function SkillType:__buildReqsEn(list)
 			itemRequirements = it["物品需求列表"] or {},
 			attributeConditions = it["属性条件列表"] or {},
 			variableConditions = it["变量条件列表"] or {},
+		})
+	end
+	return result
+end
+
+--- 构建掉落物品英文结构
+---@param items table[]
+---@return table[]
+function SkillType:__buildDropItemsEn(items)
+	local result = {}
+	for _, item in ipairs(items) do
+		table.insert(result, {
+			item = item["物品"] or "",
+			quantity = item["数量"] or 0,
+			probability = item["概率"] or 0,
+			effectType = item["作用方式"] or "",
 		})
 	end
 	return result

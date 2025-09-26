@@ -1,0 +1,233 @@
+# MiniWorld 99夜生存游戏 - 配置系统开发规则
+
+## 配置系统架构规则
+
+### 1. Config 到 TypeConfig 转换规则
+
+#### 1.1 文件命名规范
+- **Config 文件**: `scriptFiles/game/MainStorage/Code/Common/Config/{Name}ConfigConfig.lua`
+- **TypeConfig 文件**: `scriptFiles/game/MainStorage/Code/Common/TypeConfig/{Name}Type.lua`
+- **命名对应**: `{Name}ConfigConfig` → `{Name}Type`
+
+#### 1.2 类结构规范
+```lua
+---@class {Name}Type:Class
+---@field New fun(data:table):{Name}Type
+local {Name}Type = ClassMgr.Class("{Name}Type")
+
+function {Name}Type:OnInit(data)
+    -- 字段映射和初始化
+end
+```
+
+#### 1.3 字段映射规则
+
+##### 基础字段映射
+- **中文键名** → **英文字段名**
+- 保持原始数据的同时提供英文结构
+- 使用驼峰命名法 (camelCase)
+
+##### 字段类型规范
+```lua
+-- 基础信息字段
+---@field name string 名字
+---@field displayName string 显示名称  
+---@field description string 描述
+---@field icon string 图标
+---@field quality string 品级
+
+-- 配置列表字段（双结构）
+---@field rawConfigs table[] 原始配置列表
+---@field configsEn table[] 英文结构配置列表
+
+-- 属性字段（双结构）
+---@field rawAttributes table[] 属性配置（原始）
+---@field attributes table<string, number> 属性键值（中）
+---@field attributesEn table<string, number> 属性键值（英）
+```
+
+##### 双结构模式
+对于复杂配置，必须提供中英文双结构：
+```lua
+-- 原始数据存储
+self.rawData = data["原始字段名"] or {}
+
+-- 英文结构转换
+self.dataEn = self:__buildDataEn(self.rawData)
+
+-- 转换方法
+function Type:__buildDataEn(rawData)
+    local result = {}
+    for _, item in ipairs(rawData) do
+        table.insert(result, {
+            englishField = item["中文字段名"] or "",
+            -- 其他字段映射...
+        })
+    end
+    return result
+end
+```
+
+#### 1.4 访问方法规范
+```lua
+-- 获取原始数据
+function Type:GetRawData()
+    return self.rawData
+end
+
+-- 获取英文结构
+function Type:GetDataEn()
+    return self.dataEn
+end
+
+-- 查找方法
+function Type:FindByField(fieldValue)
+    for _, item in ipairs(self.rawData) do
+        if item["字段名"] == fieldValue then
+            return item
+        end
+    end
+    return nil
+end
+```
+
+### 2. ConfigLoader 装载规则
+
+#### 2.1 引用规范
+```lua
+-- Type 类引用
+local {Name}Type = require(MainStorage.Code.Common.TypeConfig.{Name}Type)
+
+-- Config 数据引用  
+local {Name}ConfigConfig = require(MainStorage.Code.Common.Config.{Name}ConfigConfig)
+```
+
+#### 2.2 存储表规范
+```lua
+-- 存储表命名：复数形式
+ConfigLoader.{Names} = {} -- 例如: Items, Skills, Equipments
+```
+
+#### 2.3 装载方法规范
+```lua
+-- 通用装载函数
+function ConfigLoader.LoadConfig(configData, typeClass, storageTable, configName)
+    -- 检查 Type 类有效性
+    if not typeClass or not typeClass.New then
+        print(string.format("警告：未找到 %s 的有效 Type 类。原始数据将被存储", configName))
+        -- 直接存储原始数据
+        for id, data in pairs(configData.Data) do
+            storageTable[id] = data
+        end
+        return
+    end
+
+    -- 实例化配置
+    for id, data in pairs(configData.Data) do
+        storageTable[id] = typeClass.New(data)
+    end
+end
+
+-- 在 Init() 中调用
+function ConfigLoader.Init()
+    ConfigLoader.LoadConfig({Name}ConfigConfig, {Name}Type, ConfigLoader.{Names}, "{Name}")
+end
+```
+
+#### 2.4 访问接口规范
+```lua
+-- 单个获取
+---@param id string
+---@return {Name}Type
+function ConfigLoader.Get{Name}(id)
+    return ConfigLoader.{Names}[id]
+end
+
+-- 全部获取
+---@return table<string, {Name}Type>
+function ConfigLoader.GetAll{Names}()
+    return ConfigLoader.{Names}
+end
+
+-- 条件筛选（如需要）
+---@param condition function
+---@return {Name}Type[]
+function ConfigLoader.Get{Names}By(condition)
+    local result = {}
+    for _, item in pairs(ConfigLoader.{Names}) do
+        if condition(item) then
+            table.insert(result, item)
+        end
+    end
+    return result
+end
+```
+
+### 3. 开发流程规范
+
+#### 3.1 新增配置类型流程
+1. **创建 Config 文件**: `{Name}ConfigConfig.lua`
+2. **创建 TypeConfig 文件**: `{Name}Type.lua`
+3. **更新 ConfigLoader**:
+   - 添加引用
+   - 添加存储表
+   - 在 Init() 中添加装载调用
+   - 添加访问接口
+
+#### 3.2 字段映射原则
+- **保持原始性**: 原始中文数据必须完整保留
+- **提供便利性**: 英文结构便于代码使用
+- **类型安全**: 完整的类型注解
+- **向后兼容**: 新增字段不影响现有功能
+
+#### 3.3 代码质量要求
+- **KISS 原则**: 保持简单，避免过度设计
+- **单一职责**: 每个方法只做一件事
+- **DRY 原则**: 避免重复代码
+- **中文注释**: 所有注释使用中文
+- **类型注解**: 完整的 Lua 类型注解
+
+### 4. 特殊配置处理
+
+#### 4.1 映射表构建
+对于需要特殊映射的配置（如迷你币商品）：
+```lua
+function ConfigLoader.Build{Special}Mapping()
+    local count = 0
+    for id, item in pairs(ConfigLoader.{Names}) do
+        if item.{specialCondition} then
+            ConfigLoader.{SpecialMapping}[item.{specialId}] = item
+            count = count + 1
+        end
+    end
+    print(string.format("{特殊映射}构建完成，共注册 %d 个", count))
+end
+```
+
+#### 4.2 数据验证
+```lua
+-- 在装载时进行数据验证
+function ConfigLoader.LoadConfig(configData, typeClass, storageTable, configName)
+    -- 验证数据完整性
+    if not configData or not configData.Data then
+        print(string.format("错误：%s 配置数据为空", configName))
+        return
+    end
+    
+    -- 继续正常装载流程...
+end
+```
+
+### 5. 错误处理规范
+
+#### 5.1 警告信息
+- 使用中文输出警告信息
+- 包含具体的配置名称和错误描述
+- 提供解决建议
+
+#### 5.2 错误恢复
+- 配置缺失时使用默认值
+- 类型错误时提供降级处理
+- 保持系统稳定性
+
+这些规则确保了配置系统的一致性、可维护性和扩展性。
