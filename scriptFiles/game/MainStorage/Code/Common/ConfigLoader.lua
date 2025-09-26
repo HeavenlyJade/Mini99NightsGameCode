@@ -17,6 +17,7 @@ local EquipmentType = require(MainStorage.Code.Common.TypeConfig.EquipmentType) 
 local ProfessionType = require(MainStorage.Code.Common.TypeConfig.ProfessionType) ---@type ProfessionType
 local SkillType = require(MainStorage.Code.Common.TypeConfig.SkillType) ---@type SkillType
 local BuffType = require(MainStorage.Code.Common.TypeConfig.BuffType) ---@type BuffType
+local MonsterType = require(MainStorage.Code.Common.TypeConfig.MonsterType) ---@type MonsterType
 -- 引用所有 Config 的原始数据
 local ItemTypeConfig = require(MainStorage.Code.Common.Config.ItemTypeConfig)
 -- local SkillConfig = require(MainStorage.Code.Common.Config.SkillConfig) -- 旧版技能配置，保留注释
@@ -30,6 +31,7 @@ local EquipmentConfig = require(MainStorage.Code.Common.Config.EquipmentConfig)
 local ProfessionConfig = require(MainStorage.Code.Common.Config.ProfessionConfig)
 local SkillConfigConfig = require(MainStorage.Code.Common.Config.SkillConfigConfig)
 local BuffConfig = require(MainStorage.Code.Common.Config.BuffConfig)
+local MonsterConfigConfig = require(MainStorage.Code.Common.Config.MonsterConfigConfig)
 
 
 ---@class ConfigLoader
@@ -41,6 +43,7 @@ ConfigLoader.Skills = {}
 ConfigLoader.Equipments = {}
 ConfigLoader.Professions = {}
 ConfigLoader.Buffs = {}
+ConfigLoader.Monsters = {}
 ConfigLoader.Levels = {}
 ConfigLoader.LevelNodeRewards = {} -- 新增关卡节点奖励配置存储
 ConfigLoader.SceneNodes = {}
@@ -49,6 +52,7 @@ ConfigLoader.PlayerInits = {}
 ConfigLoader.Lotteries = {} -- 新增抽奖配置存储
 ConfigLoader.ShopItems = {} -- 新增商城商品配置存储
 ConfigLoader.MiniShopItems = {} -- 迷你币商品映射表：miniItemId -> ShopItemType
+ConfigLoader.Monsters = {}
 
 --- 一个通用的加载函数，避免重复代码
 ---@param configData table 从Config目录加载的原始数据
@@ -85,6 +89,7 @@ function ConfigLoader.Init()
     ConfigLoader.LoadConfig(ProfessionConfig, ProfessionType, ConfigLoader.Professions, "Profession")
     ConfigLoader.LoadConfig(SkillConfigConfig, SkillType, ConfigLoader.Skills, "Skill")
     ConfigLoader.LoadConfig(BuffConfig, BuffType, ConfigLoader.Buffs, "Buff")
+    ConfigLoader.LoadConfig(MonsterConfigConfig, MonsterType, ConfigLoader.Monsters, "Monster")
     -- 构建迷你币商品映射表
     ConfigLoader.LoadConfig(ShopItemConfig, ShopItemType, ConfigLoader.ShopItems, "ShopItem")
 
@@ -301,6 +306,17 @@ function ConfigLoader.GetMiniShopItemCount()
         count = count + 1
     end
     return count
+end
+
+---@param id string
+---@return MonsterType
+function ConfigLoader.GetMonster(id)
+    return ConfigLoader.Monsters[id]
+end
+
+---@return table<string, MonsterType>
+function ConfigLoader.GetAllMonsters()
+    return ConfigLoader.Monsters
 end
 
 return ConfigLoader 
