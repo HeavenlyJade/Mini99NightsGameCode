@@ -8,11 +8,9 @@ local MainStorage = game:GetService('MainStorage')
 
 local ItemType = require(MainStorage.Code.Common.TypeConfig.ItemType)
 local LevelType = require(MainStorage.Code.Common.TypeConfig.LevelType)
-local PlayerInitType = require(MainStorage.Code.Common.TypeConfig.PlayerInitType)
-local SceneNodeType = require(MainStorage.Code.Common.TypeConfig.SceneNodeType)
+local SceneNodeType = require(MainStorage.Code.Common.TypeConfig.SceneNodeType) ---@type SceneNodeType
 local LotteryType = require(MainStorage.Code.Common.TypeConfig.LotteryType) ---@type LotteryType
 local ShopItemType = require(MainStorage.Code.Common.TypeConfig.ShopItemType) ---@type ShopItemType
-local TeleportPointType = require(MainStorage.Code.Common.TypeConfig.TeleportPointType) ---@type TeleportPointType
 local EquipmentType = require(MainStorage.Code.Common.TypeConfig.EquipmentType) ---@type EquipmentType
 local ProfessionType = require(MainStorage.Code.Common.TypeConfig.ProfessionType) ---@type ProfessionType
 local SkillType = require(MainStorage.Code.Common.TypeConfig.SkillType) ---@type SkillType
@@ -20,13 +18,10 @@ local BuffType = require(MainStorage.Code.Common.TypeConfig.BuffType) ---@type B
 local MonsterType = require(MainStorage.Code.Common.TypeConfig.MonsterType) ---@type MonsterType
 -- 引用所有 Config 的原始数据
 local ItemTypeConfig = require(MainStorage.Code.Common.Config.ItemTypeConfig)
--- local SkillConfig = require(MainStorage.Code.Common.Config.SkillConfig) -- 旧版技能配置，保留注释
 local LevelConfig = require(MainStorage.Code.Common.Config.LevelConfig)
-local SceneNodeConfig = require(MainStorage.Code.Common.Config.SceneNodeConfig)
-local PlayerInitConfig = require(MainStorage.Code.Common.Config.PlayerInitConfig)
+local SceneNodeConfig = require(MainStorage.Code.Common.Config.SceneNodeConfigConfig)
 local LotteryConfig = require(MainStorage.Code.Common.Config.LotteryConfig)
 local ShopItemConfig = require(MainStorage.Code.Common.Config.ShopItemConfig)
-local TeleportPointConfig = require(MainStorage.Code.Common.Config.TeleportPointConfig)
 local EquipmentConfig = require(MainStorage.Code.Common.Config.EquipmentConfig)
 local ProfessionConfig = require(MainStorage.Code.Common.Config.ProfessionConfig)
 local SkillConfigConfig = require(MainStorage.Code.Common.Config.SkillConfigConfig)
@@ -43,7 +38,6 @@ ConfigLoader.Skills = {}
 ConfigLoader.Equipments = {}
 ConfigLoader.Professions = {}
 ConfigLoader.Buffs = {}
-ConfigLoader.Monsters = {}
 ConfigLoader.Levels = {}
 ConfigLoader.LevelNodeRewards = {} -- 新增关卡节点奖励配置存储
 ConfigLoader.SceneNodes = {}
@@ -52,7 +46,7 @@ ConfigLoader.PlayerInits = {}
 ConfigLoader.Lotteries = {} -- 新增抽奖配置存储
 ConfigLoader.ShopItems = {} -- 新增商城商品配置存储
 ConfigLoader.MiniShopItems = {} -- 迷你币商品映射表：miniItemId -> ShopItemType
-ConfigLoader.Monsters = {}
+ConfigLoader.Monsters = {} 
 
 --- 一个通用的加载函数，避免重复代码
 ---@param configData table 从Config目录加载的原始数据
@@ -60,19 +54,29 @@ ConfigLoader.Monsters = {}
 ---@param storageTable table 用来存储实例化后对象的表
 ---@param configName string 配置的名称，用于日志打印
 function ConfigLoader.LoadConfig(configData, typeClass, storageTable, configName)
-    -- 检查Type定义是否是一个有效的类（包含New方法）
+    -- 存储目标表校验
+    if type(storageTable) ~= "table" then
+        print(string.format("错误：%s 存储目标未初始化（storageTable 不是表）", tostring(configName)))
+        return
+    end
+    -- 统一获取数据源：兼容 { Data = { ... } } 与直接返回 { ... } 两种结构
+    local dataset = (configData and (configData.Data or configData)) or nil
+    if dataset == nil then
+        print(string.format("错误：%s 配置数据为空或结构不正确", tostring(configName)))
+        return
+    end
+
+    -- 若无有效 Type 类，则直接存原始数据
     if not typeClass or not typeClass.New then
-        print(string.format("警告：未找到 %s 的有效 Type 类。原始数据将被存储", configName))
-        -- 如果没有对应的Type类，可以选择直接存储原始数据
-        for id, data in pairs(configData.Data) do
+        print(string.format("警告：未找到 %s 的有效 Type 类。原始数据将被存储", tostring(configName)))
+        for id, data in pairs(dataset) do
             storageTable[id] = data
         end
         return
     end
 
     -- 实例化配置
-    for id, data in pairs(configData.Data) do
-        -- 使用配置的键 (例如 "加速卡", "火球") 作为唯一ID
+    for id, data in pairs(dataset) do
         storageTable[id] = typeClass.New(data)
     end
 end
@@ -81,10 +85,8 @@ end
 function ConfigLoader.Init()
     ConfigLoader.LoadConfig(ItemTypeConfig, ItemType, ConfigLoader.Items, "Item")
     ConfigLoader.LoadConfig(LevelConfig, LevelType, ConfigLoader.Levels, "Level")
-    ConfigLoader.LoadConfig(PlayerInitConfig, PlayerInitType, ConfigLoader.PlayerInits, "PlayerInit")
     ConfigLoader.LoadConfig(SceneNodeConfig, SceneNodeType, ConfigLoader.SceneNodes, "SceneNode")
     ConfigLoader.LoadConfig(LotteryConfig, LotteryType, ConfigLoader.Lotteries, "Lottery")
-    ConfigLoader.LoadConfig(TeleportPointConfig, TeleportPointType, ConfigLoader.TeleportPoints, "TeleportPoint")
     ConfigLoader.LoadConfig(EquipmentConfig, EquipmentType, ConfigLoader.Equipments, "Equipment")
     ConfigLoader.LoadConfig(ProfessionConfig, ProfessionType, ConfigLoader.Professions, "Profession")
     ConfigLoader.LoadConfig(SkillConfigConfig, SkillType, ConfigLoader.Skills, "Skill")
