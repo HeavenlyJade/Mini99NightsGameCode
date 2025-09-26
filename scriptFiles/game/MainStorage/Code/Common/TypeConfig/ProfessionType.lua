@@ -1,6 +1,5 @@
 local MainStorage = game:GetService('MainStorage')
 local ClassMgr = require(MainStorage.Code.Untils.ClassMgr) ---@type ClassMgr
-local MConfig = require(MainStorage.Code.Common.GameConfig.MConfig) ---@type common_config
 
 --- 职业类型（与 ProfessionConfig 字段对齐）
 ---@class ProfessionType:Class
@@ -13,7 +12,6 @@ local MConfig = require(MainStorage.Code.Common.GameConfig.MConfig) ---@type com
 ---@field ownedEquipmentsEn table[] 装备拥有（英文结构）{ item:string, count:number }
 ---@field rawAttributes table[] 属性配置（原始）
 ---@field attributes table<string, number> 属性键值（中）
----@field attributesEn table<string, number> 属性键值（英，按 PlayerStatsConfig 映射）
 ---@field rawTalents table[] 天赋（原始）
 ---@field talentsEn table[] 天赋（英文结构）
 ---@field New fun(data:table):ProfessionType
@@ -35,7 +33,7 @@ function ProfessionType:OnInit(data)
 
 	-- 属性配置（兼容两种键：变量名称/属性）
 	self.rawAttributes = data["属性配置"] or {}
-	self.attributes, self.attributesEn = self:__buildAttributes(self.rawAttributes)
+	self.attributes = self:__buildAttributes(self.rawAttributes)
 
 	-- 天赋
 	self.rawTalents = data["天赋"] or {}
@@ -68,22 +66,19 @@ function ProfessionType:__buildOwnedEquipmentsEn(list)
 	return result
 end
 
---- 构建属性键值（中/英）
+--- 构建属性键值（中文键）
 ---@param list table[]
----@return table<string, number>, table<string, number>
+---@return table<string, number>
 function ProfessionType:__buildAttributes(list)
 	local cn = {}
-	local en = {}
 	for _, it in ipairs(list) do
 		local key = it["变量名称"] or it["属性"]
 		local value = it["数值"]
 		if key and value ~= nil then
 			cn[key] = value
-			local enKey = MConfig.PlayerStatsConfig and MConfig.PlayerStatsConfig[key]
-			if enKey then en[enKey] = value end
 		end
 	end
-	return cn, en
+	return cn
 end
 
 --- 构建天赋英文结构

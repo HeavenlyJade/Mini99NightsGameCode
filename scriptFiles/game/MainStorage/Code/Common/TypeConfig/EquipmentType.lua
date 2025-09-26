@@ -1,6 +1,5 @@
 local MainStorage = game:GetService('MainStorage')
 local ClassMgr = require(MainStorage.Code.Untils.ClassMgr) ---@type ClassMgr
-local MConfig = require(MainStorage.Code.Common.GameConfig.MConfig) ---@type common_config
 
 --- 装备类型（与 EquipmentConfig 字段对齐）
 ---@class EquipmentType:Class
@@ -27,7 +26,6 @@ local MConfig = require(MainStorage.Code.Common.GameConfig.MConfig) ---@type com
 ---@field critSocket string 爆伤位置
 ---@field attributes table<string, number> 属性键值表（由属性配置展开）
 ---@field rawAttributes table[] 原始属性配置数组
----@field attributesEn table<string, number> 英文属性键值表
 ---@field New fun(data:table):EquipmentType
 local EquipmentType = ClassMgr.Class("EquipmentType")
 
@@ -62,17 +60,11 @@ function EquipmentType:OnInit(data)
 	-- 属性配置展开为键值表
 	self.rawAttributes = data["属性配置"] or {}
 	self.attributes = {}
-	self.attributesEn = {}
 	for _, item in ipairs(self.rawAttributes) do
 		local key = item and item["属性"]
 		local value = item and item["数值"]
 		if key and value then
 			self.attributes[key] = value
-			-- 使用 PlayerStatsConfig 将中文属性名映射为英文key
-			local enKey = MConfig.PlayerStatsConfig[key]
-			if enKey then
-				self.attributesEn[enKey] = value
-			end
 		end
 	end
 end
@@ -88,12 +80,6 @@ end
 ---@return table<string, number>
 function EquipmentType:GetAttributes()
 	return self.attributes
-end
-
---- 获取英文属性（按 PlayerStatsConfig 映射）
----@return table<string, number>
-function EquipmentType:GetAttributesEn()
-	return self.attributesEn
 end
 
 --- 获取显示用的参数

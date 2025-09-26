@@ -1,6 +1,5 @@
 local MainStorage = game:GetService('MainStorage')
 local ClassMgr = require(MainStorage.Code.Untils.ClassMgr) ---@type ClassMgr
-local MConfig = require(MainStorage.Code.Common.GameConfig.MConfig) ---@type common_config
 
 --- Buff 类型（与 BuffConfig 字段对齐）
 ---@class BuffType:Class
@@ -70,16 +69,14 @@ function BuffType:__buildEffectsEn(list)
 		e.name = eff["效果名称"] or ""
 		e.description = eff["效果描述"] or ""
 
-		-- 玩家属性影响（映射变量名称为英文key（若可映射））
+		-- 玩家属性影响（保留中文变量名称）
 		e.playerStatEffects = {}
 		for _, it in ipairs(eff["玩家属性影响"] or {}) do
 			local keyCn = it["变量名称"]
 			local value = it["数值"]
 			local mode = it["作用方式"]
-			local keyEn = keyCn and MConfig.PlayerStatsConfig and MConfig.PlayerStatsConfig[keyCn] or nil
 			table.insert(e.playerStatEffects, {
 				key = keyCn,
-				keyEn = keyEn,
 				value = value,
 				mode = mode,
 			})
