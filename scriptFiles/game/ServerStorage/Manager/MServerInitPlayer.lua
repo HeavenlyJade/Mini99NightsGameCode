@@ -260,22 +260,6 @@ function MServerInitPlayer.EnsureDecorativeObjectsSync(player_actor,player)
     -- 生成玩家名称节点（如果未生成）
     NodeCloneGenerator.GeneratePlayerNameDisplay(player)
 
-    -- 装饰性对象的名称列表
-    local decorativeObjectNames = {
-        "Pet1", "Pet2", "Pet3", "Pet4", "Pet5", "Pet6",
-        "Partner1", "Partner2",
-        "Wings1",
-    }
-
-    for _, objectName in ipairs(decorativeObjectNames) do
-        local decorativeNode = player_actor:FindFirstChild(objectName)
-        if decorativeNode then
-            -- 确保同步设置正确
-            decorativeNode.IgnoreStreamSync = true
-            decorativeNode.CollideGroupID = 5
-        end
-    end
-
 
     
 

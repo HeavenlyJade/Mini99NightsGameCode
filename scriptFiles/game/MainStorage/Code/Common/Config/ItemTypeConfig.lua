@@ -1,4 +1,4 @@
-﻿-- ItemTypeConfig.lua
+-- ItemTypeConfig.lua
 
 local ItemTypeConfig = {
     ['木头'] = {

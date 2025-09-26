@@ -16,17 +16,13 @@ local MServerDataManager = {
     scene_node_handlers = {}, ---@type table<string, SceneNodeHandlerBase>
     player_scene_node_map = {}, ---@type table<number, SceneNodeHandlerBase> -- 玩家到场景节点处理器ID的映射
 
-    PetMgr = nil, ---@type PetMgr | nil
+
     MailMgr = nil, ---@type MailMgr | nil
     BagMgr = nil, ---@type BagMgr | nil
-    PartnerMgr = nil, ---@type PartnerMgr | nil
-    WingMgr = nil, ---@type WingMgr | nil
-    TrailMgr = nil, ---@type TrailMgr | nil
+
     GameModeManager = nil, ---@type GameModeManager | nil
     CommandManager= nil, ---@type CommandManager | nil
     GlobalMailManager = nil, ---@type GlobalMailManager | nil
-    AchievementMgr = nil, ---@type AchievementMgr | nil
-    RewardMgr=nil, ---@type RewardMgr | nil 
     LotteryMgr=nil, ---@type LotteryMgr | nil
     MiniShopManager= nil, ---@type MiniShopManager | nil
     RankingMgr=nil,
