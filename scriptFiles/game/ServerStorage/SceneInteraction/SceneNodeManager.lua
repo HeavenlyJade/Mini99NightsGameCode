@@ -11,8 +11,7 @@ local SceneNodeManager = {}
 
 -- 映射场景类型到处理器的路径
 local HANDLER_TYPE_MAP = {
-    ["飞行比赛"] = require(ServerStorage.SceneInteraction.handlers.RaceTriggerHandler), ---@type RaceTriggerHandler
-    ["挂机点"] = require(ServerStorage.SceneInteraction.handlers.IdleSpotHandler), ---@type IdleSpotHandler
+
     ["抽奖点"] = require(ServerStorage.SceneInteraction.handlers.LotterySpotHandler), ---@type LotterySpotHandler
     ["传送点"] = require(ServerStorage.SceneInteraction.handlers.TeleportSpotHandler), ---@type TeleportSpotHandler
     -- ["陷阱"] = require(ServerStorage.SceneInteraction.handlers.TrapHandler), -- 示例

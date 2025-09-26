@@ -10,8 +10,6 @@ local ServerScheduler = require(MainStorage.Code.MServer.Scheduler.ServerSchedul
 local Entity = require(ServerStorage.EntityTypes.Entity) ---@type Entity
 --【核心修正】不再在顶部require，以避免循环依赖
 -- local ServerDataManager = require(ServerStorage.Manager.MServerDataManager) ---@type MServerDataManager
-local NpcConfig = require(MainStorage.Code.Common.Config.NpcConfig)  ---@type NpcConfig
-local ServerEventManager = require(MainStorage.Code.MServer.Event.ServerEventManager) ---@type ServerEventManager
 local Npc = require(ServerStorage.EntityTypes.MNpc) ---@type Npc
 
 ---@class SceneNodeHandlerBase
@@ -130,26 +128,6 @@ function SceneNodeHandlerBase:OnUpdate()
     end
 end
 
----用于初始化NPC，由子类实现具体逻辑
-function SceneNodeHandlerBase:initNpcs()
-    local all_npcs = NpcConfig.GetAll()
-    for npc_name, npc_data in pairs(all_npcs) do
-        if npc_data["场景"] == self.name then
-            -- 【核心修正】应该在场景的【视觉节点】下查找NPC，而不是在逻辑节点(Area)下
-            local npcNodeContainer = self.visualNode["NPC"]
-            if npcNodeContainer and npcNodeContainer[npc_data["节点名"]] then
-                local actor = npcNodeContainer[npc_data["节点名"]]
-                local npc = Npc.New(npc_data, actor)
-
-                self.uuid2Entity[actor] = npc
-                self.npcs[npc.uuid] = npc
-                --gg.log(string.format("SceneNodeHandlerBase: NPC创建成功：'%s' 属于场景 '%s'", npc_name, self.name))
-            else
-                --gg.log(string.format("ERROR: SceneNodeHandlerBase: 在场景 '%s' 中找不到NPC '%s' 的节点 '%s'", self.name, npc_name, npc_data["节点名"]))
-            end
-        end
-    end
-end
 
 ---销毁时调用
 ---销毁时调用
