@@ -1,4 +1,4 @@
--- ProfessionConfig.lua
+﻿-- ProfessionConfig.lua
 
 local ProfessionConfig = {
     ['伐木工'] = {

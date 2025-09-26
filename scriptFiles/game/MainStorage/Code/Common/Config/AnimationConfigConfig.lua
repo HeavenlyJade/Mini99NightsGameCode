@@ -1,4 +1,4 @@
--- AnimationConfigConfig.lua
+﻿-- AnimationConfigConfig.lua
 
 local AnimationConfigConfig = {
     ['站立恐怖鹿'] = {

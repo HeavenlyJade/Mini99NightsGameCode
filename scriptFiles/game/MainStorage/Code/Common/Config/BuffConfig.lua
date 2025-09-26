@@ -1,4 +1,4 @@
--- BuffConfig.lua
+﻿-- BuffConfig.lua
 
 local BuffConfig = {
     ['生命归还'] = {

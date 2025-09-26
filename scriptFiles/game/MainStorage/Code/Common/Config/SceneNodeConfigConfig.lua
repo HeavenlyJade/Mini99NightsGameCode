@@ -1,4 +1,4 @@
--- SceneNodeConfigConfig.lua
+﻿-- SceneNodeConfigConfig.lua
 
 local SceneNodeConfigConfig = {
     ['充值节点'] = {
