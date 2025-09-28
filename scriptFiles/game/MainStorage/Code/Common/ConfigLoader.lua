@@ -16,6 +16,7 @@ local ProfessionType = require(MainStorage.Code.Common.TypeConfig.ProfessionType
 local SkillType = require(MainStorage.Code.Common.TypeConfig.SkillType) ---@type SkillType
 local BuffType = require(MainStorage.Code.Common.TypeConfig.BuffType) ---@type BuffType
 local MonsterType = require(MainStorage.Code.Common.TypeConfig.MonsterType) ---@type MonsterType
+local TaskType = require(MainStorage.Code.Common.TypeConfig.TaskType) ---@type TaskType
 -- 引用所有 Config 的原始数据
 local ItemTypeConfig = require(MainStorage.Code.Common.Config.ItemTypeConfig)
 local LevelConfig = require(MainStorage.Code.Common.Config.LevelConfig)
@@ -27,6 +28,7 @@ local ProfessionConfig = require(MainStorage.Code.Common.Config.ProfessionConfig
 local SkillConfigConfig = require(MainStorage.Code.Common.Config.SkillConfigConfig)
 local BuffConfig = require(MainStorage.Code.Common.Config.BuffConfig)
 local MonsterConfigConfig = require(MainStorage.Code.Common.Config.MonsterConfigConfig)
+local TaskConfigConfig = require(MainStorage.Code.Common.Config.TaskConfigConfig)
 
 
 ---@class ConfigLoader
@@ -46,7 +48,8 @@ ConfigLoader.PlayerInits = {}
 ConfigLoader.Lotteries = {} -- 新增抽奖配置存储
 ConfigLoader.ShopItems = {} -- 新增商城商品配置存储
 ConfigLoader.MiniShopItems = {} -- 迷你币商品映射表：miniItemId -> ShopItemType
-ConfigLoader.Monsters = {} 
+ConfigLoader.Monsters = {}
+ConfigLoader.Tasks = {} -- 新增任务配置存储 
 
 --- 一个通用的加载函数，避免重复代码
 ---@param configData table 从Config目录加载的原始数据
@@ -92,6 +95,7 @@ function ConfigLoader.Init()
     ConfigLoader.LoadConfig(SkillConfigConfig, SkillType, ConfigLoader.Skills, "Skill")
     ConfigLoader.LoadConfig(BuffConfig, BuffType, ConfigLoader.Buffs, "Buff")
     ConfigLoader.LoadConfig(MonsterConfigConfig, MonsterType, ConfigLoader.Monsters, "Monster")
+    ConfigLoader.LoadConfig(TaskConfigConfig, TaskType, ConfigLoader.Tasks, "Task")
     -- 构建迷你币商品映射表
     ConfigLoader.LoadConfig(ShopItemConfig, ShopItemType, ConfigLoader.ShopItems, "ShopItem")
 
@@ -319,6 +323,43 @@ end
 ---@return table<string, MonsterType>
 function ConfigLoader.GetAllMonsters()
     return ConfigLoader.Monsters
+end
+
+---@param id string
+---@return TaskType
+function ConfigLoader.GetTask(id)
+    return ConfigLoader.Tasks[id]
+end
+
+---@return table<string, TaskType>
+function ConfigLoader.GetAllTasks()
+    return ConfigLoader.Tasks
+end
+
+--- 按任务类型筛选任务
+---@param taskType string 任务类型
+---@return TaskType[] 满足条件的任务列表
+function ConfigLoader.GetTasksByType(taskType)
+    local result = {}
+    for _, task in pairs(ConfigLoader.Tasks) do
+        if task.taskType == taskType then
+            table.insert(result, task)
+        end
+    end
+    return result
+end
+
+--- 按任务分类筛选任务
+---@param taskCategory string 任务分类
+---@return TaskType[] 满足条件的任务列表
+function ConfigLoader.GetTasksByCategory(taskCategory)
+    local result = {}
+    for _, task in pairs(ConfigLoader.Tasks) do
+        if task.taskCategory == taskCategory then
+            table.insert(result, task)
+        end
+    end
+    return result
 end
 
 return ConfigLoader 
