@@ -207,19 +207,19 @@ function ViewBase:Close()
             soundAssetId = closeSound
         })
     end
-    if self.closeHideMouse then
-        -- 只有没有任何layer>=1的界面显示时才隐藏鼠标
-        local hasOtherLayerUI = false
-        for _, ui in pairs(ViewBase.allUI) do
-            if ui ~= self and ui.layer and ui.layer > 0 and ui.displaying then
-                hasOtherLayerUI = true
-                break
-            end
-        end
-        if not hasOtherLayerUI then
-            ViewBase.LockMouseVisible(false)
-        end
-    end
+    -- if self.closeHideMouse then
+    --     -- 只有没有任何layer>=1的界面显示时才隐藏鼠标
+    --     local hasOtherLayerUI = false
+    --     for _, ui in pairs(ViewBase.allUI) do
+    --         if ui ~= self and ui.layer and ui.layer > 0 and ui.displaying then
+    --             hasOtherLayerUI = true
+    --             break
+    --         end
+    --     end
+    --     if not hasOtherLayerUI then
+    --         ViewBase.LockMouseVisible(false)
+    --     end
+    -- end
     if displayingUI[self.layer] == self then
         displayingUI[self.layer] = nil
     end

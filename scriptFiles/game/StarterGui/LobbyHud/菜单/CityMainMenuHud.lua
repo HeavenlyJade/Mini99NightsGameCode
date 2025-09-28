@@ -49,7 +49,12 @@ function CityMainMenuHud:RegisterButtonEvents()
         self:OpenQuestUi()
     end
     
-    self.RoleButton.clickCb = onButtonClick("职业")
+    -- 职业按钮特殊处理 - 直接打开 RoleUi
+    self.RoleButton.clickCb = function(ui, button)
+        gg.log("'职业'按钮被点击", button.node.Name)
+        self:OpenRoleUi()
+    end
+    
     self.AchievementButton.clickCb = onButtonClick("成就")
 end
 
@@ -61,6 +66,17 @@ function CityMainMenuHud:OpenQuestUi()
         gg.log("任务界面已打开")
     else
         gg.log("错误：未找到 QuestUi 界面")
+    end
+end
+
+---打开职业界面
+function CityMainMenuHud:OpenRoleUi()
+    local RoleUi = ViewBase.GetUI("RoleUi")
+    if RoleUi then
+        RoleUi:Open()
+        gg.log("职业界面已打开")
+    else
+        gg.log("错误：未找到 RoleUi 界面")
     end
 end
 

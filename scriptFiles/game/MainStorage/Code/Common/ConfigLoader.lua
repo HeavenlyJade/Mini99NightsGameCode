@@ -378,4 +378,28 @@ function ConfigLoader.GetTasksBy(taskType, taskCategory)
     return result
 end
 
+---@param id string
+---@return ProfessionType
+function ConfigLoader.GetProfession(id)
+    return ConfigLoader.Professions[id]
+end
+
+---@return table<string, ProfessionType>
+function ConfigLoader.GetAllProfessions()
+    return ConfigLoader.Professions
+end
+
+--- 按星级筛选职业
+---@param star number|nil 星级，nil表示不过滤
+---@return ProfessionType[] 满足条件的职业列表
+function ConfigLoader.GetProfessionsByStar(star)
+    local result = {}
+    for _, profession in pairs(ConfigLoader.Professions) do
+        if star == nil or profession.star == star then
+            table.insert(result, profession)
+        end
+    end
+    return result
+end
+
 return ConfigLoader 
