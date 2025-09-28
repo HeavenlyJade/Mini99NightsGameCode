@@ -362,4 +362,20 @@ function ConfigLoader.GetTasksByCategory(taskCategory)
     return result
 end
 
+--- 按任务类型和分类筛选任务
+---@param taskType string|nil 任务类型，nil表示不过滤
+---@param taskCategory string|nil 任务分类，nil表示不过滤
+---@return TaskType[] 满足条件的任务列表
+function ConfigLoader.GetTasksBy(taskType, taskCategory)
+    local result = {}
+    for _, task in pairs(ConfigLoader.Tasks) do
+        local matchType = (taskType == nil) or (task.taskType == taskType)
+        local matchCategory = (taskCategory == nil) or (task.taskCategory == taskCategory)
+        if matchType and matchCategory then
+            table.insert(result, task)
+        end
+    end
+    return result
+end
+
 return ConfigLoader 
