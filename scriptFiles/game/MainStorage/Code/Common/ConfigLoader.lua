@@ -17,6 +17,7 @@ local SkillType = require(MainStorage.Code.Common.TypeConfig.SkillType) ---@type
 local BuffType = require(MainStorage.Code.Common.TypeConfig.BuffType) ---@type BuffType
 local MonsterType = require(MainStorage.Code.Common.TypeConfig.MonsterType) ---@type MonsterType
 local TaskType = require(MainStorage.Code.Common.TypeConfig.TaskType) ---@type TaskType
+local AchievementType = require(MainStorage.Code.Common.TypeConfig.AchievementType) ---@type AchievementType
 -- 引用所有 Config 的原始数据
 local ItemTypeConfig = require(MainStorage.Code.Common.Config.ItemTypeConfig)
 local LevelConfig = require(MainStorage.Code.Common.Config.LevelConfig)
@@ -29,6 +30,7 @@ local SkillConfigConfig = require(MainStorage.Code.Common.Config.SkillConfigConf
 local BuffConfig = require(MainStorage.Code.Common.Config.BuffConfig)
 local MonsterConfigConfig = require(MainStorage.Code.Common.Config.MonsterConfigConfig)
 local TaskConfigConfig = require(MainStorage.Code.Common.Config.TaskConfigConfig)
+local AchievementConfigConfig = require(MainStorage.Code.Common.Config.AchievementConfigConfig)
 
 
 ---@class ConfigLoader
@@ -49,7 +51,8 @@ ConfigLoader.Lotteries = {} -- 新增抽奖配置存储
 ConfigLoader.ShopItems = {} -- 新增商城商品配置存储
 ConfigLoader.MiniShopItems = {} -- 迷你币商品映射表：miniItemId -> ShopItemType
 ConfigLoader.Monsters = {}
-ConfigLoader.Tasks = {} -- 新增任务配置存储 
+ConfigLoader.Tasks = {} -- 新增任务配置存储
+ConfigLoader.Achievements = {} -- 新增成就配置存储 
 
 --- 一个通用的加载函数，避免重复代码
 ---@param configData table 从Config目录加载的原始数据
@@ -96,6 +99,7 @@ function ConfigLoader.Init()
     ConfigLoader.LoadConfig(BuffConfig, BuffType, ConfigLoader.Buffs, "Buff")
     ConfigLoader.LoadConfig(MonsterConfigConfig, MonsterType, ConfigLoader.Monsters, "Monster")
     ConfigLoader.LoadConfig(TaskConfigConfig, TaskType, ConfigLoader.Tasks, "Task")
+    ConfigLoader.LoadConfig(AchievementConfigConfig, AchievementType, ConfigLoader.Achievements, "Achievement")
     -- 构建迷你币商品映射表
     ConfigLoader.LoadConfig(ShopItemConfig, ShopItemType, ConfigLoader.ShopItems, "ShopItem")
 
@@ -399,6 +403,44 @@ function ConfigLoader.GetProfessionsByStar(star)
             table.insert(result, profession)
         end
     end
+    return result
+end
+
+---@param id string
+---@return AchievementType
+function ConfigLoader.GetAchievement(id)
+    return ConfigLoader.Achievements[id]
+end
+
+---@return table<string, AchievementType>
+function ConfigLoader.GetAllAchievements()
+    return ConfigLoader.Achievements
+end
+
+--- 按星级筛选成就
+---@param starLevel number|nil 星级，nil表示不过滤
+---@return AchievementType[] 满足条件的成就列表
+function ConfigLoader.GetAchievementsByStar(starLevel)
+    local result = {}
+    for _, achievement in pairs(ConfigLoader.Achievements) do
+        if starLevel == nil or achievement.starLevel == starLevel then
+            table.insert(result, achievement)
+        end
+    end
+    return result
+end
+
+--- 按排序获取成就列表
+---@return AchievementType[] 按排序排列的成就列表
+function ConfigLoader.GetAchievementsBySort()
+    local result = {}
+    for _, achievement in pairs(ConfigLoader.Achievements) do
+        table.insert(result, achievement)
+    end
+    -- 按排序字段排序
+    table.sort(result, function(a, b)
+        return a:GetSortKey() < b:GetSortKey()
+    end)
     return result
 end
 
