@@ -1,4 +1,4 @@
-﻿-- AchievementConfigConfig.lua
+-- AchievementConfigConfig.lua
 
 local AchievementConfigConfig = {
     ['活过10天'] = {

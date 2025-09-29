@@ -55,7 +55,11 @@ function CityMainMenuHud:RegisterButtonEvents()
         self:OpenRoleUi()
     end
     
-    self.AchievementButton.clickCb = onButtonClick("成就")
+    -- 成就按钮特殊处理 - 直接打开 AchievementUi
+    self.AchievementButton.clickCb = function(ui, button)
+        gg.log("'成就'按钮被点击", button.node.Name)
+        self:OpenAchievementUi()
+    end
 end
 
 ---打开任务界面
@@ -77,6 +81,17 @@ function CityMainMenuHud:OpenRoleUi()
         gg.log("职业界面已打开")
     else
         gg.log("错误：未找到 RoleUi 界面")
+    end
+end
+
+---打开成就界面
+function CityMainMenuHud:OpenAchievementUi()
+    local AchievementUi = ViewBase.GetUI("AchievementUi")
+    if AchievementUi then
+        AchievementUi:Open()
+        gg.log("成就界面已打开")
+    else
+        gg.log("错误：未找到 AchievementUi 界面")
     end
 end
 

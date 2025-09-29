@@ -1,4 +1,4 @@
-﻿-- TaskConfigConfig.lua
+-- TaskConfigConfig.lua
 
 local TaskConfigConfig = {
     ['击杀野狼'] = {
